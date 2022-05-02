@@ -1,14 +1,17 @@
 import numpy as np
 import torch 
+
 from torch.utils.data import DataLoader
 import pickle as pkl
 
 
-class sparsecoding(torch.nn.Module):
+class SparseCoding(torch.nn.Module):
     
-    def __init__(self,n_basis,n,lmbda=0.2,a_lr=1e-2,device=None,**kwargs):
+    def __init__(self, inference_method, n_basis, n, lmbda=0.2, a_lr=1e-2, device=None,**kwargs):
         """
         Parameters:
+        inference_method - sparsecoding.InferenceMethod
+            method for inferring coefficients for each image given the dictionary
         n_basis - scalar (1,)
             size of dictionary
         n - scalar (1,)
@@ -36,79 +39,24 @@ class sparsecoding(torch.nn.Module):
             If equal to None, no weight decay applied
         """
         
-        super(sparsecoding, self).__init__()
-        self.n_basis    = n_basis
-        self.n          = n
-        self.device     = torch.device("cpu") if device is None else device
-        self.n_itr      = kwargs.pop('n_itr',100)
-        self.eps        = kwargs.pop('eps', 1e-3)
+        super(SparseCoding, self).__init__()
+        self.inference_method = inference_method
+        self.n_basis = n_basis
+        self.n = n
+        self.device = torch.device("cpu") if device is None else device
+        self.n_itr = kwargs.pop('n_itr',100)
+        self.eps = kwargs.pop('eps', 1e-3)
         self.stop_early = kwargs.pop('stop_early', False)   
-        self.D_decay    = kwargs.pop('dict_decay', 0.)   
-        self.thresh     = torch.tensor(np.float32(kwargs.pop('thresh',1e-2))).to(self.device) 
-        self.D_lr       = torch.tensor(np.float32(kwargs.pop('D_lr',1e-2))).to(self.device)            
-        self.a_lr       = torch.tensor(np.float32(a_lr)).to(self.device)
-        self.lmbda      = torch.tensor(np.float32(lmbda)).to(self.device)
-        self.D          = torch.randn((self.n, self.n_basis)).to(self.device)
-        self.normalizedict()
+        self.D_decay = kwargs.pop('dict_decay', 0.)   
+        self.thresh = torch.tensor(np.float32(kwargs.pop('thresh',1e-2))).to(self.device) 
+        self.D_lr = torch.tensor(np.float32(kwargs.pop('D_lr',1e-2))).to(self.device)            
+        self.a_lr = torch.tensor(np.float32(a_lr)).to(self.device)
+        self.lmbda = torch.tensor(np.float32(lmbda)).to(self.device)
+        self.D = torch.randn((self.n, self.n_basis)).to(self.device)
+        self.normalize_dict()
+   
 
-      
-    
-    def lca(self,I):
-        """
-        Infer coefficients for each image in I using dict elements self.D
-        Method implemented according locally competative algorithm (Rozell 2008)
-        ---
-        Parameters:
-        I - torch.tensor (batch_size,n)
-            input images
-        ---
-        Returns:
-        a - torch.tensor (batch_size,n_basis)
-            sparse coefficients
-        """
-        batch_size = I.size(0)
-
-        # initialize
-        u = torch.zeros((batch_size,self.n_basis)).to(self.device)
-        a = torch.zeros((batch_size,self.n_basis)).to(self.device)
-
-        b = (self.D.t()@I.t()).t()
-        G = self.D.t()@self.D-torch.eye(self.n_basis).to(self.device)
-        for i in range(self.n_itr):
-            if self.stop_early:
-                old_u = u.clone().detach()
-                
-            a = self.Tsoft(u)
-            du = b-u-(G@a.t()).t()
-            u = u + self.a_lr*du
-            
-            if self.stop_early:
-                if (old_u - u).norm(p=2).sum() < self.eps:
-                    break 
-            self.checknan(u,'coefficients')
-            
-        return self.Tsoft(u)
-                
-                
-    def Tsoft(self,u):
-        """
-        Soft threshhold function according to Rozell 2008
-        
-        Parameters:
-        u - torch.tensor (batch_size,n_basis)
-            membrane potentials
-        ---
-        Returns: 
-        a - torch.tensor (batch_size,n_basis)
-            activations
-        """
-        a = (torch.abs(u) - self.thresh).clamp(min=0.)
-        a = torch.sign(u)*a
-        return a
-        
-                
-
-    def updatedict(self,I,a):
+    def update_dict(self,I,a):
         """
         Compute gradient of energy function w.r.t. dict elements, and update 
         ---
@@ -116,18 +64,18 @@ class sparsecoding(torch.nn.Module):
         I - torch.tensor (batch_size,n)
             input images, n_images usually batch size
         a - torch.tensor (batch_size,n_basis)
-            alread-inferred coefficients
+            already-inferred coefficients
         ---
         Returns:
         None
         """
         residual = I - torch.mm(self.D,a.t()).t()
-        dD = torch.mm(residual.t(),a) + self.dict_decay*self.D
+        dD = torch.mm(residual.t(),a) + self.D_decay*self.D
         self.D = torch.add(self.D, self.D_lr*dD)
         self.checknan()
         
         
-    def normalizedict(self):
+    def normalize_dict(self):
         """
         Normalize columns of dictionary matrix D s.t. 
         ---
@@ -141,9 +89,9 @@ class sparsecoding(torch.nn.Module):
         self.checknan()
         
         
-    def learndict(self,dataset,n_epoch,batch_size):
+    def learn_dictionary(self,dataset,n_epoch,batch_size):
         """
-        Learn dictionary for nepoch
+        Learn dictionary for n_epoch epochs
         ---
         Parameters:
         dataset - torch.utils.data.Dataset 
@@ -168,13 +116,13 @@ class sparsecoding(torch.nn.Module):
                 batch = next(iterloader)
                 
             # infer coefficients
-            a = self.lca(batch)
+            a = self.inference_method(batch, self.D)
             
             # update dictionary
-            self.updatedict(batch,a)
+            self.update_dict(batch,a)
             
             # normalize dictionary
-            self.normalizedict()
+            self.normalize_dict()
             
             # compute current energy
             l = torch.sum(torch.square(torch.linalg.vector_norm(batch-torch.mm(self.D,a.t()).t(),dim=1)) 
@@ -183,7 +131,7 @@ class sparsecoding(torch.nn.Module):
         return np.asarray(loss)
         
         
-    def getnumpydict(self):
+    def get_numpy_dict(self):
         """
         return dictionary as numpy array
         ---
@@ -216,7 +164,7 @@ class sparsecoding(torch.nn.Module):
             raise ValueError('sparsecoding error: nan in dictionary.')
             
             
-    def loaddict(self,filename):
+    def load_dict(self,filename):
         '''
         Load dictionary from pkl dump
         ---
@@ -233,7 +181,7 @@ class sparsecoding(torch.nn.Module):
         self.D = torch.tensor(nD.astype(np.float32)).to(self.device) 
         
             
-    def savedict(self,filename):
+    def save_dict(self,filename):
         '''
         Save dictionary to pkl dump
         ---
@@ -245,7 +193,7 @@ class sparsecoding(torch.nn.Module):
         None
         '''
         filehandler = open(filename,"wb")
-        pkl.dump(self.getnumpydict(),filehandler)
+        pkl.dump(self.get_numpy_dict(),filehandler)
         filehandler.close()
 
         
