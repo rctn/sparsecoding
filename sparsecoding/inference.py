@@ -76,6 +76,8 @@ class InferenceMethod:
 class LCA(InferenceMethod):
     def __init__(self, n_iter = 100, coeff_lr=1e-3, threshold=0.1, stop_early=False, epsilon=1e-2, solver = None):
         '''
+        Method implemented according locally competative algorithm (Rozell 2008) 
+        with the ideal soft thresholding function.
         
         Parameters
         ----------
@@ -173,9 +175,10 @@ class LCA(InferenceMethod):
             u = u + self.coeff_lr*du
             
             if self.stop_early:
-                if (old_u - u).norm(p=2).sum() < self.eps:
+                if  torch.linalg.norm(old_u - u)/torch.linalg.norm(old_u) < self.epsilon:
                     break 
             self.checknan(u,'coefficients')
             
         coefficients = self.threshold_nonlinearity(u)
         return coefficients
+  
