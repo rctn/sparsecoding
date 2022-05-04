@@ -1,10 +1,10 @@
 import numpy as np
 import pytorch as torch
 
-class ImageSet(self, images, whiten, filter, normalization):
+class ImageSet(object):
     ''' Class for loading and preprocessing image data.'''
 
-    def __init__(self, images):
+    def __init__(self, images, whiten, filter, normalization):
         self.images =
         self.n_images =
         self.image_dims =
@@ -25,10 +25,10 @@ class ImageSet(self, images, whiten, filter, normalization):
 
         for i in range(n_patches):
             patch_height_start = int(np.floor(np.random.rand()*patch_height_range + edge_buff))
-            patch_height_end = patch_height_start + self.patch_dims[0]
+            patch_height_end = patch_height_start + patch_dims[0]
 
             patch_width_start = int(np.floor(np.random.rand()*patch_width_range + edge_buff))
-            patch_width_end = patch_width_start + self.patch_dims[1]
+            patch_width_end = patch_width_start + patch_dims[1]
 
             image_idx = int(np.floor(np.random.rand()*(self.n_images-1)))
             patches[:,i] = self.images[patch_height_start:patch_height_end, patch_width_start:patch_width_end, image_idx].reshape(patch_dims[0]*patch_dims[1])
@@ -39,5 +39,3 @@ class ImageSet(self, images, whiten, filter, normalization):
 
 
     def filter(self, *args, **kwargs):
-
-
