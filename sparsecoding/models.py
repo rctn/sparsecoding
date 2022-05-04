@@ -39,7 +39,7 @@ class SparseCoding(torch.nn.Module):
 
     def update_dictionary(self,data,a):
         '''
-        Compute gradient of energy function w.r.t. dictionary elements, and update 
+        Compute gradient of loss function w.r.t. dictionary elements, and update 
 
         Parameters
         ----------
@@ -89,10 +89,10 @@ class SparseCoding(torch.nn.Module):
         Returns
         -------
         scalar (nepoch,)
-            energies of each batch
+            losses of each batch
             
         '''
-        energies = []
+        losses = []
         
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
         iterloader = iter(dataloader)
@@ -105,7 +105,7 @@ class SparseCoding(torch.nn.Module):
                 batch = next(iterloader)
                 
             # infer coefficients
-            a = self.inference_method(batch, self.dictionary)
+            a = self.inference_method.infer(batch, self.dictionary)
             
             # update dictionary
             self.update_dictionary(batch,a)
@@ -113,16 +113,16 @@ class SparseCoding(torch.nn.Module):
             # normalize dictionary
             self.normalize_dictionary()
             
-            # compute current energy
-            energy = self.compute_energy(batch,a)
+            # compute current loss
+            loss = self.compute_loss(batch,a)
             
-            energies.append(energy)
-        return np.asarray(energies)
+            losses.append(loss)
+        return np.asarray(losses)
         
         
-    def compute_energy(self,data,a):
+    def compute_loss(self,data,a):
         '''
-        Compute energy given data and inferred coefficients
+        Compute loss given data and inferred coefficients
         
         Parameters
         ----------
@@ -134,14 +134,14 @@ class SparseCoding(torch.nn.Module):
         Returns
         -------
         float (1,) 
-            energy
+            loss
         '''
         batch_size,_ = data.shape
         
-        MSE_energy = torch.square(torch.linalg.vector_norm(data-torch.mm(self.dictionary,a.t()).t(),dim=1)) 
-        sparsity_energy = self.sparsity_penalty*torch.abs(a).sum(dim=1)
-        total_energy = torch.sum(MSE_energy + sparsity_energy)
-        return total_energy.item()/batch_size
+        MSE_loss = torch.square(torch.linalg.vector_norm(data-torch.mm(self.dictionary,a.t()).t(),dim=1)) 
+        sparsity_loss = self.sparsity_penalty*torch.abs(a).sum(dim=1)
+        total_loss = torch.sum(MSE_loss + sparsity_loss)
+        return total_loss.item()/batch_size
         
         
     def get_numpy_dictionary(self):
