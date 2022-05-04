@@ -116,7 +116,29 @@ class LCA(InferenceMethod):
         a = (torch.abs(u) - self.threshold).clamp(min=0.)
         a = torch.sign(u)*a
         return a
+    
+    
+    def grad(self,b,G,u,a):
+        '''
+        Compute the gradient step on membrane potentials
         
+        Parameters
+        ----------
+        b : scalar (batch_size,n_coefficients)
+            driver signal for coefficients 
+        G : scalar (n_coefficients,n_coefficients)
+            inhibition matrix 
+        a : scalar (batch_size,n_coefficients)
+            currently active coefficients 
+            
+        Returns
+        -------
+        du : scalar (batch_size,n_coefficients)
+            grad of membrane potentials
+        '''
+        du = b-u-(G@a.t()).t()
+        return du
+    
              
     def infer(self, data, dictionary):
         """
@@ -125,13 +147,13 @@ class LCA(InferenceMethod):
 
         Parameters
         ----------
-        data : array-like (batch_size, n_features)
+        dictionary : array like (n_features,n_basis)
             
-        dictionary : array-like, (n_features, n_basis)
-       
+        data : array like (n_samples,n_features)
+            
         Returns
         -------
-        coefficients : array-like (batch_size, n_basis)
+        coefficients : (n_samples,n_basis)
         """
         batch_size, n_features = data.shape
         n_features, n_basis = dictionary.shape
@@ -147,7 +169,7 @@ class LCA(InferenceMethod):
                 old_u = u.clone().detach()
                 
             a = self.threshold_nonlinearity(u)
-            du = b-u-(G@a.t()).t()
+            du = self.grad(b,G,u,a)
             u = u + self.coeff_lr*du
             
             if self.stop_early:
