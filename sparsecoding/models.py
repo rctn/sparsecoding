@@ -12,7 +12,7 @@ class SparseCoding(torch.nn.Module):
         
         Parameters
         ----------
-        inference_method - sparsecoding.InferenceMethod
+        inference_method : sparsecoding.InferenceMethod
             method for inferring coefficients for each image given the dictionary
         n_basis : scalar (1,)
             number of basis functions in dictionary
@@ -43,9 +43,9 @@ class SparseCoding(torch.nn.Module):
 
         Parameters
         ----------
-        data - torch.tensor (batch_size,n_features)
+        data : torch.tensor (batch_size,n_features)
             input data
-        a - torch.tensor (batch_size,n_basis)
+        a : torch.tensor (batch_size,n_basis)
             already-inferred coefficients
 
         Returns
@@ -85,9 +85,11 @@ class SparseCoding(torch.nn.Module):
             number of iterations to learn dictionary
         batch_size : scalar (1,)
             batch size to learn on
-        ---
-        Returns:
-        energies - scalar (nepoch,)
+        
+        Returns
+        -------
+        scalar (nepoch,)
+            energies of each batch
             
         '''
         energies = []
@@ -120,6 +122,7 @@ class SparseCoding(torch.nn.Module):
         
     def compute_energy(self,data,a):
         '''
+        Compute energy given data and inferred coefficients
         
         Parameters
         ----------
@@ -130,8 +133,8 @@ class SparseCoding(torch.nn.Module):
 
         Returns
         -------
-        float : (1,) 
-            energy 
+        float (1,) 
+            energy
         '''
         batch_size,_ = data.shape
         
@@ -143,7 +146,7 @@ class SparseCoding(torch.nn.Module):
         
     def get_numpy_dictionary(self):
         '''
-        return dictionary as numpy array
+        Returns dictionary as numpy array
         
         Parameters
         ----------
