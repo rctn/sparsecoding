@@ -75,6 +75,22 @@ class InferenceMethod:
         
 class LCA(InferenceMethod):
     def __init__(self, n_iter = 100, coeff_lr=1e-3, threshold=0.1, stop_early=False, epsilon=1e-2, solver = None):
+        '''
+        
+        Parameters
+        ----------
+        n_iter : scalar (1,) default=100
+            number of iterations to run
+        coeff_lr : scalar (1,) default=1e-3
+            update rate of coefficient dynamics
+        threshold : scalar (1,) default=0.1
+            threshold for non-linearity
+        stop_early : boolean (1,) default=False
+            stops dynamics early based on change in coefficents
+        epsilon : scalar (1,) default=1e-2
+            only used if stop_early True, specifies criteria to stop dynamics
+        solver : default=None
+        '''
         super().__init__(solver)
         self.threshold = threshold
         self.coeff_lr = coeff_lr
@@ -87,11 +103,13 @@ class LCA(InferenceMethod):
         """
         Soft threshhold function according to Rozell 2008
         
-        Parameters:
+        Parameters
+        ----------
         u - torch.tensor (batch_size,n_basis)
             membrane potentials
-        ---
-        Returns: 
+        
+        Returns
+        -------
         a - torch.tensor (batch_size,n_basis)
             activations
         """
@@ -139,95 +157,3 @@ class LCA(InferenceMethod):
             
         coefficients = self.threshold_nonlinearity(u)
         return coefficients
-    
-    
-#     def ista(self,I):
-#         """
-#         Infer coefficients for each image in I made up of dict elements D
-#         Method implemented according to 1996 Olshausen and Field
-#         ---
-#         Parameters:
-#         I - torch.tensor (batch_size,n)
-#             input images
-#         ---
-#         Returns:
-#         a - scalar (batch_size,n_basis)
-#             sparse coefficients
-#         """
-#         batch_size = I.size(0)
-
-#         # initialize
-#         a = torch.zeros((batch_size,self.n_basis)).to(self.device)
-#         residual = I - torch.mm(self.D,a.t()).t()
-       
-#         for i in range(self.n_itr):
-            
-#             # update coefficients
-#             a = a + self.a_lr*((self.D.t()@residual.t()).t() - self.lmbda*torch.sign(a))
-            
-#             # check stopping criteria
-#             if self.stop_early:
-#                 residual_new = I - torch.mm(self.D,a.t()).t()
-#                 if (residual_new - residual).norm(p=2).sum() < self.eps:
-#                     break
-#                 residual = residual_new
-#             else:
-#                 residual = I - torch.mm(self.D,a.t()).t()    
-#             # check for nans
-#             self.checknan(a,'coefficients')
-#         return a
-    
-    
-#     def lca(self,I):
-#         """
-#         Infer coefficients for each image in I using dict elements self.D
-#         Method implemented according locally competative algorithm (Rozell 2008)
-#         ---
-#         Parameters:
-#         I - torch.tensor (batch_size,n)
-#             input images
-#         ---
-#         Returns:
-#         a - torch.tensor (batch_size,n_basis)
-#             sparse coefficients
-#         """
-#         batch_size = I.size(0)
-
-#         # initialize
-#         u = torch.zeros((batch_size,self.n_basis)).to(self.device)
-#         a = torch.zeros((batch_size,self.n_basis)).to(self.device)
-
-#         b = (self.D.t()@I.t()).t()
-#         G = self.D.t()@self.D-torch.eye(self.n_basis).to(self.device)
-#         for i in range(self.n_itr):
-#             if self.stop_early:
-#                 old_u = u.clone().detach()
-                
-#             a = self.threshold_nonlinearity(u)
-#             du = b-u-(G@a.t()).t()
-#             u = u + self.a_lr*du
-            
-#             if self.stop_early:
-#                 if (old_u - u).norm(p=2).sum() < self.eps:
-#                     break 
-#             self.checknan(u,'coefficients')
-            
-#         return self.threshold_nonlinearity(u)
-                
-                
-#     def Tsoft(self,u):
-#         """
-#         Soft threshhold function according to Rozell 2008
-        
-#         Parameters:
-#         u - torch.tensor (batch_size,n_basis)
-#             membrane potentials
-#         ---
-#         Returns: 
-#         a - torch.tensor (batch_size,n_basis)
-#             activations
-#         """
-#         a = (torch.abs(u) - self.thresh).clamp(min=0.)
-#         a = torch.sign(u)*a
-#         return a
-        
