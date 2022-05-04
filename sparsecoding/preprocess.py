@@ -1,15 +1,6 @@
 import numpy as np
 import torch
 
-<<<<<<< HEAD
-class ImageSet(object):
-    ''' Class for loading and preprocessing image data.'''
-
-    def __init__(self, images, whiten, filter, normalization):
-        self.images =
-        self.n_images =
-        self.image_dims =
-=======
 
 ## Sparse Coding Image Processing Code
 def patch_images(images, n_divisions=16):
@@ -41,7 +32,6 @@ def patch_images(images, n_divisions=16):
         patches = [im[x * patch_size_x : (x + 1) * patch_size_x, y * patch_size_y : (y + 1) * patch_size_y] for x in range(0, n_divisions) for y in range(0,n_divisions)]
         patch_data[i] = torch.stack(patches)
     return patch_data, n_images, n_divisions, patch_size_x, patch_size_y
->>>>>>> 79a4b5f632221c8d7bf98b6694b0e6ef33f2f1ec
 
 def unpatch_image(I, n_divisions, patch_size_x):
     final_img = torch.empty(n_divisions*patch_size_x, n_divisions*patch_size_x)
@@ -76,14 +66,6 @@ def preprocess_images(images, patch_size_x, patch_size_y):
 # class ImageSet(self, images, whiten, filter, normalization):
 #     ''' Class for loading and preprocessing image data.'''
 
-<<<<<<< HEAD
-        for i in range(n_patches):
-            patch_height_start = int(np.floor(np.random.rand()*patch_height_range + edge_buff))
-            patch_height_end = patch_height_start + patch_dims[0]
-
-            patch_width_start = int(np.floor(np.random.rand()*patch_width_range + edge_buff))
-            patch_width_end = patch_width_start + patch_dims[1]
-=======
 #     def __init__(self, images):
 #         self.images =
 #         self.n_images =
@@ -92,7 +74,6 @@ def preprocess_images(images, patch_size_x, patch_size_y):
 #     def generate_patches(self, n_patches, patch_dims, edge_buff):
 #         '''
 #         Generate randomly extracted patches from full image dataset.
->>>>>>> 79a4b5f632221c8d7bf98b6694b0e6ef33f2f1ec
 
 #         Parameters
 #         ________
@@ -108,9 +89,6 @@ def preprocess_images(images, patch_size_x, patch_size_y):
 #             patch_height_start = int(np.floor(np.random.rand()*patch_height_range + edge_buff))
 #             patch_height_end = patch_height_start + self.patch_dims[0]
 
-<<<<<<< HEAD
-    def filter(self, *args, **kwargs):
-=======
 #             patch_width_start = int(np.floor(np.random.rand()*patch_width_range + edge_buff))
 #             patch_width_end = patch_width_start + self.patch_dims[1]
 
@@ -125,4 +103,3 @@ def preprocess_images(images, patch_size_x, patch_size_y):
 #     def filter(self, *args, **kwargs):
 
 
->>>>>>> 79a4b5f632221c8d7bf98b6694b0e6ef33f2f1ec
