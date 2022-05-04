@@ -35,6 +35,24 @@ class SparseCoding(torch.nn.Module):
         self.sparsity_penalty = torch.tensor(np.float32(sparsity_penalty)).to(self.device)
         self.dictionary = torch.randn((self.n_features, self.n_basis)).to(self.device)
         self.normalize_dictionary()
+
+    def compute_grad_dict(self, data, a):
+        '''
+        Compute gradient of loss function w.r.t. dictionary elements 
+        
+        Parameters
+        ----------
+        data : torch.tensor (batch_size,n_features)
+            input data
+        a : torch.tensor (batch_size,n_basis)
+            already-inferred coefficients
+
+        Returns
+        -------
+        '''
+        residual = data - torch.mm(self.dictionary,a.t()).t()
+        ddictionary = torch.mm(residual.t(),a)
+        return ddictionary
    
 
     def update_dictionary(self,data,a):
@@ -53,7 +71,7 @@ class SparseCoding(torch.nn.Module):
 
         '''
         residual = data - torch.mm(self.dictionary,a.t()).t()
-        ddictionary = torch.mm(residual.t(),a)
+        ddictionary = self.compute_grad_dict(data,a)
         self.dictionary = torch.add(self.dictionary, self.dictionary_lr*ddictionary)
         self.checknan()
         
@@ -214,3 +232,44 @@ class SparseCoding(torch.nn.Module):
         filehandler = open(filename,"wb")
         pkl.dump(self.get_numpy_dictionary(),filehandler)
         filehandler.close()
+
+class SimulSparseCoding(SparseCoding):
+    def __init__(self, inference_method, n_basis, n_features, sparsity_penalty, inf_rate=1, learn_rate=1, time_step=1, t_max=1000, device=None):
+        super().__init__(inference_method, n_basis, n_features, sparsity_penalty)
+        self.inf_rate = inf_rate
+        self.learn_rate = learn_rate
+        self.time_step = time_step
+        self.t_max = t_max
+        self.device = device
+
+    def simultaneous_update(self, data, batch_size):
+        losses = []
+        dataloader = DataLoader(data, batch_size=batch_size, shuffle=True)
+        iterloader = iter(dataloader)
+
+        for t in range(self.t_max/self.time_step):
+            try:
+                batch = next(iterloader)
+            except StopIteration:
+                dataloader = DataLoader(data, batch_size=batch_size, shuffle=True)
+                iterloader = iter(dataloader)
+                batch = next(iterloader)
+
+        
+            # update coefficients
+            a -= (self.time_step/self.inf_rate) * self.inference_method.grad()
+
+            # update dictionary
+            self.dictionary -= (self.time_step/self.learn_rate) * self.compute_grad_dict(data, a)
+            
+            # normalize dictionary
+            self.normalize_dictionary()
+            
+            # compute current loss
+            loss = self.compute_loss(batch,a)
+            
+            losses.append(loss)
+        return np.asarray(losses)
+    
+
+    
