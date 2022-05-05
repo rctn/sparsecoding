@@ -197,6 +197,12 @@ class SparseCoding(torch.nn.Module):
             raise ValueError('sparsecoding error: nan in dictionary.')
             
             
+    def set_dictionary(self, dictionary):
+        self.dictionary = dictionary.to(self.device)
+        self.n_features = dictionary.shape[0]
+        self.n_basis = dictionary.shape[1]
+    
+    
     def load_dictionary(self,filename):
         '''
         Load dictionary from pkl dump
@@ -211,9 +217,11 @@ class SparseCoding(torch.nn.Module):
 
         '''
         file = open(filename,'rb')
-        nD = pkl.load(file)
+        dictionary = pkl.load(file)
+        dictionary = torch.tensor(dictionary.astype(np.float32))
         file.close()
-        self.dictionary = torch.tensor(nD.astype(np.float32)).to(self.device) 
+        self.set_dictionary(dictionary)
+
         
             
     def save_dictionary(self,filename):
@@ -232,6 +240,7 @@ class SparseCoding(torch.nn.Module):
         filehandler = open(filename,"wb")
         pkl.dump(self.get_numpy_dictionary(),filehandler)
         filehandler.close()
+        
 
 class SimulSparseCoding(SparseCoding):
     def __init__(self, inference_method, n_basis, n_features, sparsity_penalty, inf_rate=1, learn_rate=1, time_step=1, t_max=1000, device=None):
