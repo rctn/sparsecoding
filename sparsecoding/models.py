@@ -246,8 +246,9 @@ class SimulSparseCoding(SparseCoding):
         losses = []
         dataloader = DataLoader(data, batch_size=batch_size, shuffle=True)
         iterloader = iter(dataloader)
+        a = torch.rand((batch_size, self.n_basis)).to(self.device)
 
-        for t in range(self.t_max/self.time_step):
+        for t in range(int(self.t_max/self.time_step)):
             try:
                 batch = next(iterloader)
             except StopIteration:
@@ -257,10 +258,11 @@ class SimulSparseCoding(SparseCoding):
 
         
             # update coefficients
-            a -= (self.time_step/self.inf_rate) * self.inference_method.grad()
+            residual = batch - (self.dictionary@a.t()).t()
+            a -= (self.time_step/self.inf_rate) * self.inference_method.grad(residual, self.dictionary,a)
 
             # update dictionary
-            self.dictionary -= (self.time_step/self.learn_rate) * self.compute_grad_dict(data, a)
+            self.dictionary -= (self.time_step/self.learn_rate) * self.compute_grad_dict(batch, a)
             
             # normalize dictionary
             self.normalize_dictionary()
