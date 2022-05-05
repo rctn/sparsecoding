@@ -269,4 +269,116 @@ class Vanilla(InferenceMethod):
             
             self.checknan(a,'coefficients')
         return a
+    
+    
+    
+class LSM(InferenceMethod):
+    """
+    Infer coefficients for each image in data using elements dictionary.
+    Method implemented according to "Group Sparse Coding with a Laplacian Scale Mixture Prior" (P. J. Garrigues & B. A. Olshausen, 2010)
+    """    
+
+    def __init__(self, n_iter = 100, n_iter_LSM = 6, beta=0.01, alpha=80.0, sigma=0.005, sparse_threshold = 10**-2, solver = None):
+        '''
+        
+        Parameters
+        ----------
+        n_iter : scalar (1,) default=100
+            number of iterations to run for an optimizer
+
+        n_iter_LSM : scalar (1,) default=6
+            number of iterations to run the outer loop of  LSM
+
+        beta : scalar (1,) default=0.01
+            LSM parameter used to update lambdas          
+
+        alpha : scalar (1,) default=80.0
+            LSM parameter used to update lambdas  
+
+        sigma : scalar (1,) default=0.005
+            LSM parameter used to compute the loss function
+
+        sparse_threshold : scalar (1,) default=10**-2
+            threshold used to discard smallest coefficients in the final solution
+            SM parameter used to compute the loss function
+            
+        solver : default=None
+        '''
+        super().__init__(solver)
+        self.n_iter = n_iter
+        self.n_iter_LSM = n_iter_LSM
+        
+        self.beta = beta
+        self.alpha = alpha
+        self.sigma = sigma
+        self.sparse_threshold = sparse_threshold
+
+    def lsm_Loss(self, phi, x, s, lambdas, sigma):
+        
+        loss = (1/(2*(sigma**2)))*torch.pow(torch.norm(x - torch.mm(phi,s.t()).t(), p=2, dim=1, keepdim=True),2) + torch.sum(lambdas.mul(torch.abs(s)), 1, keepdim=True)  
+        
+        return loss        
+     
+    def infer(self, data, dictionary):
+        """
+        Infer coefficients for each image in data using dict elements dictionary using Laplacian Scale Mixture (LSM)
+
+        Parameters
+        ----------
+        data : array-like (batch_size, n_features)
+            
+        dictionary : array-like, (n_features, n_basis)
+       
+        Returns
+        -------
+        coefficients : array-like (batch_size, n_basis)
+        """
+        batch_size, n_features = data.shape
+        n_features, n_basis = dictionary.shape
+        device = dictionary.device
+
+        # Initialize coefficients for the whole batch
+        coefficients=torch.zeros(batch_size, n_basis, requires_grad=True).to(device)
+
+        for i in range(0,self.n_iter_LSM):
+            
+            # Compute the initial values of lambdas
+            lambdas = (self.alpha + 1)/(self.beta + torch.abs(coefficients))
+            
+            # Set coefficients to zero before doing repeating the inference with new lambdas
+            coefficients=torch.zeros(batch_size, n_basis, requires_grad=True)
+            optimizer = torch.optim.Adam([coefficients])
+            
+            # Internal loop to infer the coefficients with the current lambdas
+            for t in range(0,self.n_iter):
+                
+                # compute LSM loss for the current iteration
+                loss = self.lsm_Loss(phi=dictionary, x=data, s=coefficients, lambdas=lambdas, sigma=self.sigma) 
+        
+        
+                optimizer.zero_grad()
+        
+                # Backward pass: compute gradient of the loss with respect to model parameters
+                loss.backward(torch.ones((batch_size,1)),retain_graph=True)
+        
+                # Calling the step function on an Optimizer makes an update to its parameters
+                optimizer.step()
+        
+        
+        # Sparsify the final solution by discarding the small coefficients
+        coefficients.data[torch.abs(coefficients.data)<self.sparse_threshold] = 0 
+      
+        return coefficients.detach()    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
       
