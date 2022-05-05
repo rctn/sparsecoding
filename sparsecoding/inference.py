@@ -393,7 +393,6 @@ class LSM(InferenceMethod):
                                      lambdas=lambdas, 
                                      sigma=self.sigma
                 ) 
-                print(loss.device)
                 
                 optimizer.zero_grad()
         
