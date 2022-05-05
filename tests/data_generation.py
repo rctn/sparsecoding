@@ -5,7 +5,7 @@ import torch
 class BarsDataset:
     '''Generate bars dictionary and dataset'''
     
-    def __init__(self,patch_size,n_samples,coefficient_treshold,device=torch.device('cpu')):
+    def __init__(self,patch_size=8,n_samples=5,coefficient_treshold=0.8,device=torch.device('cpu')):
         self.patch_size = patch_size
         self.n_samples = n_samples
         self.coefficient_treshold = coefficient_treshold
