@@ -181,7 +181,6 @@ class LCA(InferenceMethod):
         coefficients = self.threshold_nonlinearity(u)
         return coefficients
   
-
     
 class Vanilla(InferenceMethod):
     def __init__(self, n_iter = 100, coeff_lr=1e-3, sparsity_penalty=0.2, stop_early=False, epsilon=1e-2, solver = None):
@@ -270,3 +269,4 @@ class Vanilla(InferenceMethod):
             
             self.checknan(a,'coefficients')
         return a
+      
