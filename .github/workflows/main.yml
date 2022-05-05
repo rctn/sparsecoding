@@ -5,7 +5,7 @@ on:
     branches: [main,unit-test]
 
 jobs:
-  name: Build and test
+
   runs-on: ubuntu-latest
   steps:
     - uses: actions/checkout@v2
