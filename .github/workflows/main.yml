@@ -1,6 +1,9 @@
 name: "Testing"
+
 on: [push]
+
 jobs:
+
   runs-on: ubuntu-latest
   steps:
     - uses: actions/checkout@v2
@@ -11,8 +14,8 @@ jobs:
         python-version: 3.9
         architecture: x64
 
-   - name: Install dependencies
-     run: pip install -r requirements.txt 
+    - name: Install dependencies
+      run: pip install -r requirements.txt
 
-   - name: Run Test
-     run: python -m unittest discover tests
+    - name: Run Test
+      run: python -m unittest discover tests
