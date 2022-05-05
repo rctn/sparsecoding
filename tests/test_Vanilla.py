@@ -22,7 +22,6 @@ class TestVanilla(TestCase):
         evaluate(torch.device('cpu'))
         if torch.cuda.is_available():
             evaluate(torch.device('cuda'))
-            
         
         inference_method = inference.Vanilla(n_iter=10,stop_early=True)    
         evaluate(torch.device('cpu'))
