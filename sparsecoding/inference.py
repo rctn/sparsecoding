@@ -144,9 +144,8 @@ class LCA(InferenceMethod):
              
     def infer(self, data, dictionary):
         """
-        Infer coefficients for each image in data using dict elements dictionary.
-        Method implemented according locally competative algorithm (Rozell 2008)
-
+        Infer coefficients using provided dictionary
+ 
         Parameters
         ----------
         dictionary : array like (n_features,n_basis)
@@ -182,3 +181,92 @@ class LCA(InferenceMethod):
         coefficients = self.threshold_nonlinearity(u)
         return coefficients
   
+    
+class Vanilla(InferenceMethod):
+    def __init__(self, n_iter = 100, coeff_lr=1e-3, sparsity_penalty=0.2, stop_early=False, epsilon=1e-2, solver = None):
+        '''
+        Gradient descent with Euler's method on model in Olhausen & Feild (1997)
+        with laplace prior over coefficients (corresponding to l-1 norm penalty).
+        
+        Parameters
+        ----------
+        n_iter : scalar (1,) default=100
+            number of iterations to run
+        coeff_lr : scalar (1,) default=1e-3
+            update rate of coefficient dynamics
+        sparsity_penalty : scalar (1,) default=0.2
+            
+        stop_early : boolean (1,) default=False
+            stops dynamics early based on change in coefficents
+        epsilon : scalar (1,) default=1e-2
+            only used if stop_early True, specifies criteria to stop dynamics
+        solver : default=None
+        '''
+        super().__init__(solver)
+        self.coeff_lr = coeff_lr
+        self.sparsity_penalty = sparsity_penalty
+        self.stop_early = stop_early
+        self.epsilon = epsilon
+        self.n_iter = n_iter
+    
+    
+    def grad(self,residual,dictionary,a):
+        '''
+        Compute the gradient step on coefficients
+        
+        Parameters
+        ----------
+        residual : scalar (batch_size,n_features)
+            residual between reconstructed image and original
+        dictionary : scalar (n_features,n_coefficients)
+        
+        a : scalar (batch_size,n_coefficients)
+            
+        Returns
+        -------
+        da : scalar (batch_size,n_coefficients)
+            grad of membrane potentials
+        '''
+        da = (dictionary.t()@residual.t()).t() - self.sparsity_penalty*torch.sign(a)
+        return da
+    
+             
+    def infer(self, data, dictionary):
+        """
+        Infer coefficients using provided dictionary
+
+        Parameters
+        ----------
+        dictionary : array like (n_features,n_basis)
+            
+        data : array like (n_samples,n_features)
+            
+        Returns
+        -------
+        coefficients : (n_samples,n_basis)
+        """
+        batch_size, n_features = data.shape
+        n_features, n_basis = dictionary.shape
+        device = dictionary.device
+
+        # initialize
+        a = torch.rand((batch_size, n_basis)).to(device)
+        
+        residual = data - (dictionary@a.t()).t()
+        for i in range(self.n_iter):
+            
+            if self.stop_early:
+                old_a = a.clone().detach()
+                
+            da = self.grad(residual,dictionary,a)
+            a = a + self.coeff_lr*da
+            
+            if self.stop_early:
+                if  torch.linalg.norm(old_a - a)/torch.linalg.norm(old_a) < self.epsilon:
+                    break 
+                    
+            residual = data - (dictionary@a.t()).t()
+            
+            self.checknan(a,'coefficients')
+        return a
+      
