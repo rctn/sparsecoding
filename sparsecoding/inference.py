@@ -319,7 +319,7 @@ class LSM(InferenceMethod):
         Parameters
         ----------
         data : array-like (batch_size, n_features)
-            data to be used in spare coding
+            data to be used in sparse coding
             
         dictionary : array-like, (n_features, n_basis)
             dictionary to be used
@@ -351,7 +351,7 @@ class LSM(InferenceMethod):
         Parameters
         ----------
         data : array-like (batch_size, n_features)
-            data to be used in spare coding
+            data to be used in sparse coding
             
         dictionary : array-like, (n_features, n_basis)
             dictionary to be used to get the coefficients
