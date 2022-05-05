@@ -278,7 +278,7 @@ class LSM(InferenceMethod):
     Method implemented according to "Group Sparse Coding with a Laplacian Scale Mixture Prior" (P. J. Garrigues & B. A. Olshausen, 2010)
     """    
 
-    def __init__(self, n_iter = 100, n_iter_LSM = 6, BETA=0.01, ALPHA=80.0, sigma=0.005, sparseThreshold = 10**-2, solver = None):
+    def __init__(self, n_iter = 100, n_iter_LSM = 6, beta=0.01, alpha=80.0, sigma=0.005, sparse_threshold = 10**-2, solver = None):
         '''
         
         Parameters
@@ -289,16 +289,16 @@ class LSM(InferenceMethod):
         n_iter_LSM : scalar (1,) default=6
             number of iterations to run the outer loop of  LSM
 
-        BETA : scalar (1,) default=0.01
-            LSM parameter used to update LAMBDA          
+        beta : scalar (1,) default=0.01
+            LSM parameter used to update lambdas          
 
-        ALPHA : scalar (1,) default=80.0
-            LSM parameter used to update LAMBDA  
+        alpha : scalar (1,) default=80.0
+            LSM parameter used to update lambdas  
 
         sigma : scalar (1,) default=0.005
             LSM parameter used to compute the loss function
 
-        sparseThreshold : scalar (1,) default=10**-2
+        sparse_threshold : scalar (1,) default=10**-2
             threshold used to discard smallest coefficients in the final solution
             SM parameter used to compute the loss function
             
@@ -308,14 +308,14 @@ class LSM(InferenceMethod):
         self.n_iter = n_iter
         self.n_iter_LSM = n_iter_LSM
         
-        self.BETA = BETA
-        self.ALPHA = ALPHA
+        self.beta = beta
+        self.alpha = alpha
         self.sigma = sigma
-        self.sparseThreshold = sparseThreshold
+        self.sparse_threshold = sparse_threshold
 
-    def LSMLoss(self, Phi, x, s, Lambda, sigma):
+    def lsm_Loss(self, phi, x, s, lambdas, sigma):
         
-        loss = (1/(2*(sigma**2)))*torch.pow(torch.norm(x - torch.mm(Phi,s.t()).t(), p=2, dim=1, keepdim=True),2) + torch.sum(Lambda.mul(torch.abs(s)), 1, keepdim=True)  
+        loss = (1/(2*(sigma**2)))*torch.pow(torch.norm(x - torch.mm(phi,s.t()).t(), p=2, dim=1, keepdim=True),2) + torch.sum(lambdas.mul(torch.abs(s)), 1, keepdim=True)  
         
         return loss        
      
@@ -343,14 +343,14 @@ class LSM(InferenceMethod):
 
         for i in range(0,self.n_iter_LSM):
         
-            Lambda = (self.ALPHA + 1)/(self.BETA + torch.abs(coefficients))
+            lambdas = (self.alpha + 1)/(self.beta + torch.abs(coefficients))
         
             coefficients=torch.zeros(batch_size, n_basis, requires_grad=True)
             optimizer = torch.optim.Adam([coefficients])
         
             for t in range(0,self.n_iter):
                 
-                loss = self.LSMLoss(Phi=dictionary, x=data, s=coefficients, Lambda=Lambda, sigma=self.sigma) # compute LSM loss
+                loss = self.lsm_Loss(phi=dictionary, x=data, s=coefficients, lambdas=lambdas, sigma=self.sigma) # compute LSM loss
         
         
                 optimizer.zero_grad()
@@ -362,7 +362,8 @@ class LSM(InferenceMethod):
                 optimizer.step()
         
         
-        coefficients.data[torch.abs(coefficients.data)<self.sparseThreshold] = 0 # Sparsify the final solution by discarding the small coefficients
+        # Sparsify the final solution by discarding the small coefficients
+        coefficients.data[torch.abs(coefficients.data)<self.sparseThreshold] = 0 
       
         return coefficients.detach()    
     
