@@ -307,15 +307,40 @@ class LSM(InferenceMethod):
         super().__init__(solver)
         self.n_iter = n_iter
         self.n_iter_LSM = n_iter_LSM
-        
         self.beta = beta
         self.alpha = alpha
         self.sigma = sigma
         self.sparse_threshold = sparse_threshold
 
-    def lsm_Loss(self, phi, x, s, lambdas, sigma):
+    def lsm_Loss(self, data, dictionary, coefficients, lambdas, sigma):
+        """
+        Compute LSM loss according to equation (7) in (P. J. Garrigues & B. A. Olshausen, 2010)
+
+        Parameters
+        ----------
+        data : array-like (batch_size, n_features)
+            data to be used in sparse coding
+            
+        dictionary : array-like, (n_features, n_basis)
+            dictionary to be used
+            
+        coefficients : array-like (batch_size, n_basis)
+            the current values of coefficients
         
-        loss = (1/(2*(sigma**2)))*torch.pow(torch.norm(x - torch.mm(phi,s.t()).t(), p=2, dim=1, keepdim=True),2) + torch.sum(lambdas.mul(torch.abs(s)), 1, keepdim=True)  
+        lambdas : array-like (batch_size, n_basis)
+            the current values of regularization coefficient for all basis
+            
+        sigma : scalar (1,) default=0.005
+            LSM parameter used to compute the loss functions    
+            
+        Returns
+        -------
+        loss : array-like (batch_size, 1)
+            loss values for each data sample
+        """        
+        
+        # Compute loss 
+        loss = (1/(2*(sigma**2)))*torch.pow(torch.norm(data - torch.mm(dictionary,coefficients.t()).t(), p=2, dim=1, keepdim=True),2) + torch.sum(lambdas.mul(torch.abs(coefficients)), 1, keepdim=True)  
         
         return loss        
      
@@ -326,19 +351,23 @@ class LSM(InferenceMethod):
         Parameters
         ----------
         data : array-like (batch_size, n_features)
+            data to be used in sparse coding
             
         dictionary : array-like, (n_features, n_basis)
+            dictionary to be used to get the coefficients
        
         Returns
         -------
         coefficients : array-like (batch_size, n_basis)
         """
+        # Get input characteristics
         batch_size, n_features = data.shape
         n_features, n_basis = dictionary.shape
         device = dictionary.device
 
         # Initialize coefficients for the whole batch
         coefficients=torch.zeros(batch_size, n_basis, requires_grad=True).to(device)
+        
 
         for i in range(0,self.n_iter_LSM):
             
@@ -346,16 +375,17 @@ class LSM(InferenceMethod):
             lambdas = (self.alpha + 1)/(self.beta + torch.abs(coefficients))
             
             # Set coefficients to zero before doing repeating the inference with new lambdas
-            coefficients=torch.zeros(batch_size, n_basis, requires_grad=True)
+            coefficients=torch.zeros(batch_size, n_basis, requires_grad=True).to(device)
+            
+            # Set up optimizer
             optimizer = torch.optim.Adam([coefficients])
             
             # Internal loop to infer the coefficients with the current lambdas
             for t in range(0,self.n_iter):
                 
                 # compute LSM loss for the current iteration
-                loss = self.lsm_Loss(phi=dictionary, x=data, s=coefficients, lambdas=lambdas, sigma=self.sigma) 
-        
-        
+                loss = self.lsm_Loss(data=data, dictionary=dictionary, coefficients=coefficients, lambdas=lambdas, sigma=self.sigma) 
+                
                 optimizer.zero_grad()
         
                 # Backward pass: compute gradient of the loss with respect to model parameters
