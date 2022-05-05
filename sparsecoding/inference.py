@@ -337,20 +337,23 @@ class LSM(InferenceMethod):
         n_features, n_basis = dictionary.shape
         device = dictionary.device
 
-        # initialize
-        #u = torch.zeros((batch_size, n_basis)).to(device)
+        # Initialize coefficients for the whole batch
         coefficients=torch.zeros(batch_size, n_basis, requires_grad=True).to(device)
 
         for i in range(0,self.n_iter_LSM):
-        
+            
+            # Compute the initial values of lambdas
             lambdas = (self.alpha + 1)/(self.beta + torch.abs(coefficients))
-        
+            
+            # Set coefficients to zero before doing repeating the inference with new lambdas
             coefficients=torch.zeros(batch_size, n_basis, requires_grad=True)
             optimizer = torch.optim.Adam([coefficients])
-        
+            
+            # Internal loop to infer the coefficients with the current lambdas
             for t in range(0,self.n_iter):
                 
-                loss = self.lsm_Loss(phi=dictionary, x=data, s=coefficients, lambdas=lambdas, sigma=self.sigma) # compute LSM loss
+                # compute LSM loss for the current iteration
+                loss = self.lsm_Loss(phi=dictionary, x=data, s=coefficients, lambdas=lambdas, sigma=self.sigma) 
         
         
                 optimizer.zero_grad()
@@ -363,7 +366,7 @@ class LSM(InferenceMethod):
         
         
         # Sparsify the final solution by discarding the small coefficients
-        coefficients.data[torch.abs(coefficients.data)<self.sparseThreshold] = 0 
+        coefficients.data[torch.abs(coefficients.data)<self.sparse_threshold] = 0 
       
         return coefficients.detach()    
     
