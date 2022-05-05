@@ -375,7 +375,7 @@ class LSM(InferenceMethod):
             lambdas = (self.alpha + 1)/(self.beta + torch.abs(coefficients))
             
             # Set coefficients to zero before doing repeating the inference with new lambdas
-            coefficients=torch.zeros(batch_size, n_basis, requires_grad=True)
+            coefficients=torch.zeros(batch_size, n_basis, requires_grad=True).to(device)
             
             # Set up optimizer
             optimizer = torch.optim.Adam([coefficients])
