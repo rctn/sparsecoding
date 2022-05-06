@@ -153,6 +153,9 @@ class LCA(InferenceMethod):
         dictionary : array like (n_features,n_basis)
             
         data : array like (n_samples,n_features)
+        
+        coeff_0 : array-like (n_samples,n_basis)
+            initial coefficient values
             
         Returns
         -------
@@ -207,6 +210,9 @@ class Vanilla(InferenceMethod):
         epsilon : scalar (1,) default=1e-2
             only used if stop_early True, specifies criteria to stop dynamics
         solver : default=None
+        
+        coeff_0 : array-like (n_samples,n_basis)
+            initial coefficient values
         '''
         super().__init__(solver)
         self.coeff_lr = coeff_lr
