@@ -8,7 +8,6 @@ class TestISTA(TestCase):
     '''Test ISTA inference algorithm'''
 
     def test_coefficient_shapes(self):
-
         def evaluate(device):
             bars = BarsDataset(device=device)
             a = inference_method.infer(bars.data, bars.dictionary)
@@ -26,11 +25,11 @@ class TestISTA(TestCase):
 
     def test_bars(self):
         '''Evaluate quality of coefficient inference on bars dataset'''
-        inference_method = inference.ISTA(coeff_lr=5e-3, n_iter=100)
+        inference_method = inference.ISTA(n_iter=100)
         cpudevice = torch.device('cpu')
         # coefficients do not go identically to zero - very relaxed criteria
-        rtol = 1e-4
-        atol = 1e-4
+        rtol = 1e-1
+        atol = 1e-1
 
         def evaluate(device):
             bars = BarsDataset(device=device)
