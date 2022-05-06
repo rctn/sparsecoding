@@ -39,7 +39,7 @@ class InferenceMethod:
         raise NotImplementedError
     
     
-    def infer(self,dictionary,data):
+    def infer(self,dictionary,data,coeff_0=None):
         '''
         Infer the coefficients given a dataset and dictionary.
         
@@ -48,6 +48,9 @@ class InferenceMethod:
         dictionary : array like (n_features,n_basis)
             
         data : array like (n_samples,n_features)
+        
+        coeff_0 : array-like (n_samples,n_basis)
+            initial coefficient values
             
         Returns
         -------
@@ -71,7 +74,6 @@ class InferenceMethod:
             raise ValueError('InferenceMethod error: nan in %s.'%(name))
             
 
-        
         
 class LCA(InferenceMethod):
     def __init__(self, n_iter = 100, coeff_lr=1e-3, threshold=0.1, stop_early=False, epsilon=1e-2, solver = None):
@@ -142,7 +144,7 @@ class LCA(InferenceMethod):
         return du
     
              
-    def infer(self, data, dictionary):
+    def infer(self, data, dictionary, coeff_0=None):
         """
         Infer coefficients using provided dictionary
  
@@ -161,7 +163,10 @@ class LCA(InferenceMethod):
         device = dictionary.device
 
         # initialize
-        u = torch.zeros((batch_size, n_basis)).to(device)
+        if coeff_0 is not None:
+            u = coeff_0.to(device)
+        else:
+            u = torch.zeros((batch_size, n_basis)).to(device)
 
         b = (dictionary.t()@data.t()).t()
         G = dictionary.t()@dictionary-torch.eye(n_basis).to(device)
@@ -175,6 +180,7 @@ class LCA(InferenceMethod):
             
             if self.stop_early:
                 if  torch.linalg.norm(old_u - u)/torch.linalg.norm(old_u) < self.epsilon:
+                    print('|'*(i//3))
                     break 
             self.checknan(u,'coefficients')
             
