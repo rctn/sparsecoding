@@ -237,7 +237,7 @@ class Vanilla(InferenceMethod):
         return da
     
              
-    def infer(self, data, dictionary):
+    def infer(self, data, dictionary, coeff_0=None):
         """
         Infer coefficients using provided dictionary
 
@@ -256,8 +256,11 @@ class Vanilla(InferenceMethod):
         device = dictionary.device
 
         # initialize
-        a = torch.rand((batch_size, n_basis)).to(device)
-        
+        if coeff_0 is not None:
+            a = coeff_0.to(device)
+        else:
+            a = torch.rand((batch_size, n_basis)).to(device)
+
         residual = data - (dictionary@a.t()).t()
         for i in range(self.n_iter):
             
