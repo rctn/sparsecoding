@@ -183,7 +183,6 @@ class LCA(InferenceMethod):
             
             if self.stop_early:
                 if  torch.linalg.norm(old_u - u)/torch.linalg.norm(old_u) < self.epsilon:
-                    print('|'*(i//3))
                     break 
             self.checknan(u,'coefficients')
             
