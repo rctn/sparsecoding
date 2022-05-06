@@ -36,8 +36,8 @@ class InferenceMethod:
         -------
         '''
         raise NotImplementedError
-
-    def infer(self, dictionary, data):
+        
+    def infer(self,dictionary,data,coeff_0=None):
         '''
         Infer the coefficients given a dataset and dictionary.
 
@@ -47,6 +47,9 @@ class InferenceMethod:
 
         data : array like (n_samples,n_features)
 
+        coeff_0 : array-like (n_samples,n_basis)
+            initial coefficient values
+            
         Returns
         -------
         coefficients : (n_samples,n_basis)
@@ -67,6 +70,7 @@ class InferenceMethod:
         '''
         if torch.isnan(data).any():
             raise ValueError('InferenceMethod error: nan in %s.' % (name))
+
 
 
 class LCA(InferenceMethod):
@@ -134,8 +138,9 @@ class LCA(InferenceMethod):
         '''
         du = b-u-(G@a.t()).t()
         return du
-
-    def infer(self, data, dictionary):
+    
+             
+    def infer(self, data, dictionary, coeff_0=None):
         """
         Infer coefficients using provided dictionary
 
@@ -144,7 +149,10 @@ class LCA(InferenceMethod):
         dictionary : array like (n_features,n_basis)
 
         data : array like (n_samples,n_features)
-
+        
+        coeff_0 : array-like (n_samples,n_basis)
+            initial coefficient values
+            
         Returns
         -------
         coefficients : (n_samples,n_basis)
@@ -154,7 +162,10 @@ class LCA(InferenceMethod):
         device = dictionary.device
 
         # initialize
-        u = torch.zeros((batch_size, n_basis)).to(device)
+        if coeff_0 is not None:
+            u = coeff_0.to(device)
+        else:
+            u = torch.zeros((batch_size, n_basis)).to(device)
 
         b = (dictionary.t()@data.t()).t()
         G = dictionary.t()@dictionary-torch.eye(n_basis).to(device)
@@ -194,6 +205,9 @@ class Vanilla(InferenceMethod):
         epsilon : scalar (1,) default=1e-2
             only used if stop_early True, specifies criteria to stop dynamics
         solver : default=None
+        
+        coeff_0 : array-like (n_samples,n_basis)
+            initial coefficient values
         '''
         super().__init__(solver)
         self.coeff_lr = coeff_lr
@@ -222,8 +236,9 @@ class Vanilla(InferenceMethod):
         da = (dictionary.t()@residual.t()).t() - \
             self.sparsity_penalty*torch.sign(a)
         return da
-
-    def infer(self, data, dictionary):
+    
+             
+    def infer(self, data, dictionary, coeff_0=None):
         """
         Infer coefficients using provided dictionary
 
@@ -242,7 +257,11 @@ class Vanilla(InferenceMethod):
         device = dictionary.device
 
         # initialize
-        a = torch.rand((batch_size, n_basis)).to(device)
+
+        if coeff_0 is not None:
+            a = coeff_0.to(device)
+        else:
+            a = torch.rand((batch_size, n_basis)).to(device)
 
         residual = data - (dictionary@a.t()).t()
         for i in range(self.n_iter):
