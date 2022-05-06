@@ -265,7 +265,7 @@ class Vanilla(InferenceMethod):
 
 class ISTA(InferenceMethod):
     def __init__(self, n_iter=100, sparsity_penalty=1e-2, stop_early=False,
-                 epsilon=1e-3, solver=None):
+                 epsilon=1e-2, solver=None):
         '''
 
         Parameters
@@ -275,7 +275,7 @@ class ISTA(InferenceMethod):
         sparsity_penalty : scalar (1,) default=0.2
         stop_early : boolean (1,) default=False
             stops dynamics early based on change in coefficents
-        epsilon : scalar (1,) default=1e-3
+        epsilon : scalar (1,) default=1e-2
             only used if stop_early True, specifies criteria to stop dynamics
         solver : default=None
         '''
@@ -322,32 +322,32 @@ class ISTA(InferenceMethod):
         n_basis = dictionary.shape[1]
         device = dictionary.device
 
-        # Calculate stepsize based on largest eigenvalue of (dictionary.T @ dictionary).
+        # Calculate stepsize based on largest eigenvalue of
+        # dictionary.T @ dictionary.
         lipschitz_constant = torch.symeig(
             torch.mm(dictionary.T, dictionary))[0][-1]
-        stepsize = 1 / lipschitz_constant
+        stepsize = 1. / lipschitz_constant
         self.threshold = stepsize * self.sparsity_penalty
 
         # Initialize coefficients.
         u = torch.zeros((batch_size, n_basis)).to(device)
-        residual = torch.mm(u, dictionary) - data
-        # residual = data - (dictionary@u.T).T
+        residual = torch.mm(u, dictionary.T) - data
 
         for _ in range(self.n_iter):
-            u -= stepsize * torch.mm(residual, dictionary.T)
+            if self.stop_early:
+                old_u = u.clone().detach()
+
+            u -= stepsize * torch.mm(residual, dictionary)
             self.coefficients = self.threshold_nonlinearity(u)
 
             if self.stop_early:
-                res_new = torch.mm(self.coefficients, dictionary) - data
-                # res_new = data - (dictionary@self.coefficients.T).T
-                # Stopping condition is a function of change of the residual.
-                res_change = torch.mean(
-                    torch.abs(res_new - residual) / stepsize)
-                if res_change < self.epsilon:
+                # Stopping condition is function of change of the coefficients.
+                a_change = torch.mean(
+                    torch.abs(old_u - u) / stepsize)
+                if a_change < self.epsilon:
                     break
 
-            residual = torch.matmul(self.coefficients, dictionary) - data
-            # residual = data - (dictionary@self.coefficients.T).T
+            residual = torch.mm(dictionary, self.coefficients.T).T - data
             u = self.coefficients
         return self.coefficients
 

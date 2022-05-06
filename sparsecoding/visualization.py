@@ -84,8 +84,6 @@ def plot_patches(patches,
     patches : scalar (batch_size, n_pixels)
     color : boolean (1,) default=False
         set True if dictionary 3 channel (color)
-    nrow : scalar (1,) default=30
-        number of dictionary elements in a row
     normalize : boolean (1,) default=True
         normalize to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
     scale_each : boolean (1,) default=True
