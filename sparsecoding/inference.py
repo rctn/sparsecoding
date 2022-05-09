@@ -36,7 +36,7 @@ class InferenceMethod:
         -------
         '''
         raise NotImplementedError
-        
+
     def infer(self,dictionary,data,coeff_0=None):
         '''
         Infer the coefficients given a dataset and dictionary.
@@ -49,7 +49,7 @@ class InferenceMethod:
 
         coeff_0 : array-like (n_samples,n_basis)
             initial coefficient values
-            
+
         Returns
         -------
         coefficients : (n_samples,n_basis)
@@ -76,7 +76,7 @@ class InferenceMethod:
 class LCA(InferenceMethod):
     def __init__(self, n_iter=100, coeff_lr=1e-3, threshold=0.1, stop_early=False, epsilon=1e-2, solver=None):
         '''
-        Method implemented according locally competative algorithm (Rozell 2008) 
+        Method implemented according locally competative algorithm (Rozell 2008)
         with the ideal soft thresholding function.
 
         Parameters
@@ -125,11 +125,11 @@ class LCA(InferenceMethod):
         Parameters
         ----------
         b : scalar (batch_size,n_coefficients)
-            driver signal for coefficients 
+            driver signal for coefficients
         G : scalar (n_coefficients,n_coefficients)
-            inhibition matrix 
+            inhibition matrix
         a : scalar (batch_size,n_coefficients)
-            currently active coefficients 
+            currently active coefficients
 
         Returns
         -------
@@ -138,8 +138,8 @@ class LCA(InferenceMethod):
         '''
         du = b-u-(G@a.t()).t()
         return du
-    
-             
+
+
     def infer(self, data, dictionary, coeff_0=None):
         """
         Infer coefficients using provided dictionary
@@ -149,10 +149,10 @@ class LCA(InferenceMethod):
         dictionary : array like (n_features,n_basis)
 
         data : array like (n_samples,n_features)
-        
+
         coeff_0 : array-like (n_samples,n_basis)
             initial coefficient values
-            
+
         Returns
         -------
         coefficients : (n_samples,n_basis)
@@ -205,7 +205,7 @@ class Vanilla(InferenceMethod):
         epsilon : scalar (1,) default=1e-2
             only used if stop_early True, specifies criteria to stop dynamics
         solver : default=None
-        
+
         coeff_0 : array-like (n_samples,n_basis)
             initial coefficient values
         '''
@@ -236,8 +236,8 @@ class Vanilla(InferenceMethod):
         da = (dictionary.t()@residual.t()).t() - \
             self.sparsity_penalty*torch.sign(a)
         return da
-    
-             
+
+
     def infer(self, data, dictionary, coeff_0=None):
         """
         Infer coefficients using provided dictionary
@@ -389,10 +389,10 @@ class LSM(InferenceMethod):
             number of iterations to run the outer loop of  LSM
 
         beta : scalar (1,) default=0.01
-            LSM parameter used to update lambdas          
+            LSM parameter used to update lambdas
 
         alpha : scalar (1,) default=80.0
-            LSM parameter used to update lambdas  
+            LSM parameter used to update lambdas
 
         sigma : scalar (1,) default=0.005
             LSM parameter used to compute the loss function
@@ -430,7 +430,7 @@ class LSM(InferenceMethod):
             the current values of regularization coefficient for all basis
 
         sigma : scalar (1,) default=0.005
-            LSM parameter used to compute the loss functions    
+            LSM parameter used to compute the loss functions
 
         Returns
         -------
