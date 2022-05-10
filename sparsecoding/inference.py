@@ -323,7 +323,7 @@ class ISTA(InferenceMethod):
         a = torch.sign(u)*a
         return a
 
-    def infer(self, data, dictionary):
+    def infer(self, data, dictionary, coeff_0=None):
         """
         Infer coefficients for each image in data using dictionary elements.
         Uses ISTA (Beck & Taboulle 2009), equations 1.4 and 1.5.
@@ -349,7 +349,11 @@ class ISTA(InferenceMethod):
         self.threshold = stepsize * self.sparsity_penalty
 
         # Initialize coefficients.
-        u = torch.zeros((batch_size, n_basis)).to(device)
+        # initialize
+        if coeff_0 is not None:
+            u = coeff_0.to(device)
+        else:
+            u = torch.zeros((batch_size, n_basis)).to(device)
         residual = torch.mm(u, dictionary.T) - data
 
         for _ in range(self.n_iter):
