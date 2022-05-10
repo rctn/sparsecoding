@@ -74,7 +74,7 @@ class InferenceMethod:
 
 
 class LCA(InferenceMethod):
-    def __init__(self, n_iter=100, coeff_lr=1e-3, threshold=0.1, stop_early=False, epsilon=1e-2, solver=None, return_all='none'):
+    def __init__(self, n_iter=100, coeff_lr=1e-3, threshold=0.1, stop_early=False, epsilon=1e-2, solver=None, return_all_coefficients='none'):
         '''
         Method implemented according locally competative algorithm (Rozell 2008) 
         with the ideal soft thresholding function.
@@ -91,11 +91,11 @@ class LCA(InferenceMethod):
             stops dynamics early based on change in coefficents
         epsilon : scalar (1,) default=1e-2
             only used if stop_early True, specifies criteria to stop dynamics
-        return_all : string (1,) default='none'
+        return_all_coefficients : string (1,) default='none'
             options: ['none','membrane','active']
             returns all coefficients during inference procedure if not equal to 'none'
-            if return_all=='membrane', membrane potentials (u) returned. 
-            if return_all=='active', active units (a) (output of thresholding function over u) returned. 
+            if return_all_coefficients=='membrane', membrane potentials (u) returned. 
+            if return_all_coefficients=='active', active units (a) (output of thresholding function over u) returned. 
             user beware: if n_iter is large, setting this parameter to True 
             can result in large memory usage/potential exhaustion. This function typically used for 
             debugging
@@ -107,9 +107,9 @@ class LCA(InferenceMethod):
         self.stop_early = stop_early
         self.epsilon = epsilon
         self.n_iter = n_iter
-        if return_all not in ['none','membrane','active']:
-            raise ValueError("Invalid input for return_all. Valid inputs are: \'none\', \'membrane\', \'active\'")
-        self.return_all = return_all
+        if return_all_coefficients not in ['none','membrane','active']:
+            raise ValueError("Invalid input for return_all_coefficients. Valid inputs are: \'none\', \'membrane\', \'active\'.")
+        self.return_all_coefficients = return_all_coefficients
       
     def threshold_nonlinearity(self, u):
         """
@@ -166,7 +166,7 @@ class LCA(InferenceMethod):
         Returns
         -------
         coefficients : (n_samples,n_basis) OR (n_samples,<=(n_iter+1),n_basis)
-           first case occurs if return_all == 'none'. if return_all != 'none',
+           first case occurs if return_all_coefficients == 'none'. if return_all_coefficients != 'none',
            returned shape is second case. Returned dimension < occurs when
            stop_early==True and stopping criteria met. 
         """
@@ -190,8 +190,8 @@ class LCA(InferenceMethod):
                 old_u = u.clone().detach()
                 
              # check return all
-            if self.return_all is not 'none':
-                if self.return_all is 'active':
+            if self.return_all_coefficients is not 'none':
+                if self.return_all_coefficients is 'active':
                     coefficients = torch.concat([coefficients, self.threshold_nonlinearity(u).clone().unsqueeze(1)],dim=1)
                 else:
                     coefficients = torch.concat([coefficients, u.clone().unsqueeze(1)],dim=1)
@@ -208,18 +208,18 @@ class LCA(InferenceMethod):
 
             self.checknan(u, 'coefficients')
             
-        # return active units if return_all in ['none','active']
-        if self.return_all is 'active':
+        # return active units if return_all_coefficients in ['none','active']
+        if self.return_all_coefficients is 'active':
             final_coefficients = self.threshold_nonlinearity(u)
             coefficients = torch.concat([coefficients, final_coefficients.clone().unsqueeze(1)],dim=1)
         else:
-            coefficients = torch.concat([coefficients, self.threshold_nonlinearity(u).clone().unsqueeze(1)],dim=1)
+            coefficients = torch.concat([coefficients, u.clone().unsqueeze(1)],dim=1)
 
         return coefficients.squeeze()
 
 
 class Vanilla(InferenceMethod):
-    def __init__(self, n_iter=100, coeff_lr=1e-3, sparsity_penalty=0.2, stop_early=False, epsilon=1e-2, solver=None):
+    def __init__(self, n_iter=100, coeff_lr=1e-3, sparsity_penalty=0.2, stop_early=False, epsilon=1e-2, solver=None, return_all_coefficients=False):
         '''
         Gradient descent with Euler's method on model in Olhausen & Feild (1997)
         with laplace prior over coefficients (corresponding to l-1 norm penalty).
@@ -236,10 +236,12 @@ class Vanilla(InferenceMethod):
             stops dynamics early based on change in coefficents
         epsilon : scalar (1,) default=1e-2
             only used if stop_early True, specifies criteria to stop dynamics
+        return_all_coefficients : string (1,) default=False
+            returns all coefficients during inference procedure if True
+            user beware: if n_iter is large, setting this parameter to True 
+            can result in large memory usage/potential exhaustion. This function typically used for 
+            debugging
         solver : default=None
-        
-        coeff_0 : array-like (n_samples,n_basis)
-            initial coefficient values
         '''
         super().__init__(solver)
         self.coeff_lr = coeff_lr
@@ -247,6 +249,7 @@ class Vanilla(InferenceMethod):
         self.stop_early = stop_early
         self.epsilon = epsilon
         self.n_iter = n_iter
+        self.return_all_coefficients = return_all_coefficients
 
     def grad(self, residual, dictionary, a):
         '''
@@ -278,24 +281,34 @@ class Vanilla(InferenceMethod):
         dictionary : array like (n_features,n_basis)
 
         data : array like (n_samples,n_features)
+        
+        coeff_0 : array-like (n_samples,n_basis)
+            initial coefficient values
 
         Returns
         -------
-        coefficients : (n_samples,n_basis)
+        coefficients : (n_samples,n_basis) OR (n_samples,<=(n_iter+1),n_basis)
+           first case occurs if return_all_coefficients is False. if return_all_coefficients True,
+           returned shape is second case. Returned dimension < occurs when
+           stop_early==True and stopping criteria met. 
         """
         batch_size, n_features = data.shape
         n_features, n_basis = dictionary.shape
         device = dictionary.device
 
         # initialize
-
         if coeff_0 is not None:
             a = coeff_0.to(device)
         else:
-            a = torch.rand((batch_size, n_basis)).to(device)
+            a = torch.rand((batch_size, n_basis)).to(device)-0.5
+            
+        coefficients = torch.zeros((batch_size, 0, n_basis)).to(device)
 
         residual = data - (dictionary@a.t()).t()
         for i in range(self.n_iter):
+            
+            if self.return_all_coefficients: 
+                coefficients = torch.concat([coefficients, a.clone().unsqueeze(1)],dim=1)
 
             if self.stop_early:
                 old_a = a.clone().detach()
@@ -310,12 +323,14 @@ class Vanilla(InferenceMethod):
             residual = data - (dictionary@a.t()).t()
 
             self.checknan(a, 'coefficients')
-        return a
+            
+        coefficients = torch.concat([coefficients, a.clone().unsqueeze(1)],dim=1)
+        return torch.squeeze(coefficients)
 
 
 class ISTA(InferenceMethod):
     def __init__(self, n_iter=100, sparsity_penalty=1e-2, stop_early=False,
-                 epsilon=1e-2, solver=None):
+                 epsilon=1e-2, solver=None, return_all_coefficients=False):
         '''
 
         Parameters
@@ -327,6 +342,11 @@ class ISTA(InferenceMethod):
             stops dynamics early based on change in coefficents
         epsilon : scalar (1,) default=1e-2
             only used if stop_early True, specifies criteria to stop dynamics
+        return_all_coefficients : string (1,) default=False
+            returns all coefficients during inference procedure if True
+            user beware: if n_iter is large, setting this parameter to True 
+            can result in large memory usage/potential exhaustion. This function typically used for 
+            debugging
         solver : default=None
         '''
         super().__init__(solver)
@@ -335,6 +355,7 @@ class ISTA(InferenceMethod):
         self.stop_early = stop_early
         self.epsilon = epsilon
         self.coefficients = None
+        self.return_all_coefficients = return_all_coefficients
 
     def threshold_nonlinearity(self, u):
         """
@@ -354,7 +375,7 @@ class ISTA(InferenceMethod):
         a = torch.sign(u)*a
         return a
 
-    def infer(self, data, dictionary):
+    def infer(self, data, dictionary,coeff_0=None):
         """
         Infer coefficients for each image in data using dictionary elements.
         Uses ISTA (Beck & Taboulle 2009), equations 1.4 and 1.5.
@@ -362,11 +383,18 @@ class ISTA(InferenceMethod):
         Parameters
         ----------
         data : array-like (batch_size, n_features)
+        
         dictionary : array-like, (n_features, n_basis)
+        
+        coeff_0 : array-like (n_samples,n_basis)
+            initial coefficient values
 
         Returns
         -------
-        coefficients : array-like (batch_size, n_basis)
+        coefficients : (n_samples,n_basis) OR (n_samples,<=(n_iter+1),n_basis)
+           first case occurs if return_all_coefficients is False. if return_all_coefficients True,
+           returned shape is second case. Returned dimension < occurs when
+           stop_early==True and stopping criteria met.
         """
         batch_size = data.shape[0]
         n_basis = dictionary.shape[1]
@@ -380,13 +408,21 @@ class ISTA(InferenceMethod):
         self.threshold = stepsize * self.sparsity_penalty
 
         # Initialize coefficients.
-        u = torch.zeros((batch_size, n_basis)).to(device)
-        residual = torch.mm(u, dictionary.T) - data
-
+        if coeff_0 is not None:
+            u = coeff_0.to(device)
+        else:
+            u = torch.zeros((batch_size, n_basis)).to(device)
+        coefficients = torch.zeros((batch_size, 0, n_basis)).to(device)
+        self.coefficients = self.threshold_nonlinearity(u)
+        residual = torch.mm(dictionary, self.coefficients.T).T - data
+        
         for _ in range(self.n_iter):
             if self.stop_early:
                 old_u = u.clone().detach()
 
+            if self.return_all_coefficients: 
+                coefficients = torch.concat([coefficients, self.threshold_nonlinearity(u).clone().unsqueeze(1)], dim=1)
+                
             u -= stepsize * torch.mm(residual, dictionary)
             self.coefficients = self.threshold_nonlinearity(u)
 
@@ -399,7 +435,9 @@ class ISTA(InferenceMethod):
 
             residual = torch.mm(dictionary, self.coefficients.T).T - data
             u = self.coefficients
-        return self.coefficients
+            
+        coefficients = torch.concat([coefficients, self.coefficients.clone().unsqueeze(1)], dim=1)
+        return torch.squeeze(coefficients)
 
 
 class LSM(InferenceMethod):
@@ -408,30 +446,30 @@ class LSM(InferenceMethod):
     Method implemented according to "Group Sparse Coding with a Laplacian Scale Mixture Prior" (P. J. Garrigues & B. A. Olshausen, 2010)
     """
 
-    def __init__(self, n_iter=100, n_iter_LSM=6, beta=0.01, alpha=80.0, sigma=0.005, sparse_threshold=10**-2, solver=None):
+    def __init__(self, n_iter=100, n_iter_LSM=6, beta=0.01, alpha=80.0, sigma=0.005, 
+                 sparse_threshold=10**-2, solver=None, return_all_coefficients=False):
         '''
 
         Parameters
         ----------
         n_iter : scalar (1,) default=100
             number of iterations to run for an optimizer
-
         n_iter_LSM : scalar (1,) default=6
             number of iterations to run the outer loop of  LSM
-
         beta : scalar (1,) default=0.01
             LSM parameter used to update lambdas          
-
         alpha : scalar (1,) default=80.0
             LSM parameter used to update lambdas  
-
         sigma : scalar (1,) default=0.005
             LSM parameter used to compute the loss function
-
         sparse_threshold : scalar (1,) default=10**-2
             threshold used to discard smallest coefficients in the final solution
             SM parameter used to compute the loss function
-
+        return_all_coefficients : string (1,) default=False
+            returns all coefficients during inference procedure if True
+            user beware: if n_iter is large, setting this parameter to True 
+            can result in large memory usage/potential exhaustion. This function typically used for 
+            debugging
         solver : default=None
         '''
         super().__init__(solver)
@@ -441,6 +479,7 @@ class LSM(InferenceMethod):
         self.alpha = alpha
         self.sigma = sigma
         self.sparse_threshold = sparse_threshold
+        self.return_all_coefficients = return_all_coefficients
 
     def lsm_Loss(self, data, dictionary, coefficients, lambdas, sigma):
         """
@@ -450,16 +489,12 @@ class LSM(InferenceMethod):
         ----------
         data : array-like (batch_size, n_features)
             data to be used in sparse coding
-
         dictionary : array-like, (n_features, n_basis)
             dictionary to be used
-
         coefficients : array-like (batch_size, n_basis)
             the current values of coefficients
-
         lambdas : array-like (batch_size, n_basis)
             the current values of regularization coefficient for all basis
-
         sigma : scalar (1,) default=0.005
             LSM parameter used to compute the loss functions    
 
@@ -485,7 +520,6 @@ class LSM(InferenceMethod):
         ----------
         data : array-like (batch_size, n_features)
             data to be used in sparse coding
-
         dictionary : array-like, (n_features, n_basis)
             dictionary to be used to get the coefficients
 
