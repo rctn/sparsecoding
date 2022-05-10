@@ -74,7 +74,7 @@ class InferenceMethod:
 
 
 class LCA(InferenceMethod):
-    def __init__(self, n_iter=100, coeff_lr=1e-3, threshold=0.1, stop_early=False, epsilon=1e-2, solver=None):
+    def __init__(self, n_iter=100, coeff_lr=1e-3, threshold=0.1, stop_early=False, epsilon=1e-2, solver=None, return_all='none'):
         '''
         Method implemented according locally competative algorithm (Rozell 2008) 
         with the ideal soft thresholding function.
@@ -91,6 +91,14 @@ class LCA(InferenceMethod):
             stops dynamics early based on change in coefficents
         epsilon : scalar (1,) default=1e-2
             only used if stop_early True, specifies criteria to stop dynamics
+        return_all : string (1,) default='none'
+            options: ['none','membrane','active']
+            returns all coefficients during inference procedure if not equal to 'none'
+            if return_all=='membrane', membrane potentials (u) returned. 
+            if return_all=='active', active units (a) (output of thresholding function over u) returned. 
+            user beware: if n_iter is large, setting this parameter to True 
+            can result in large memory usage/potential exhaustion. This function typically used for 
+            debugging
         solver : default=None
         '''
         super().__init__(solver)
@@ -99,7 +107,10 @@ class LCA(InferenceMethod):
         self.stop_early = stop_early
         self.epsilon = epsilon
         self.n_iter = n_iter
-
+        if return_all not in ['none','membrane','active']:
+            raise ValueError("Invalid input for return_all. Valid inputs are: \'none\', \'membrane\', \'active\'")
+        self.return_all = return_all
+      
     def threshold_nonlinearity(self, u):
         """
         Soft threshhold function according to Rozell 2008
@@ -138,8 +149,7 @@ class LCA(InferenceMethod):
         '''
         du = b-u-(G@a.t()).t()
         return du
-    
-             
+         
     def infer(self, data, dictionary, coeff_0=None):
         """
         Infer coefficients using provided dictionary
@@ -155,7 +165,10 @@ class LCA(InferenceMethod):
             
         Returns
         -------
-        coefficients : (n_samples,n_basis)
+        coefficients : (n_samples,n_basis) OR (n_samples,<=(n_iter+1),n_basis)
+           first case occurs if return_all == 'none'. if return_all != 'none',
+           returned shape is second case. Returned dimension < occurs when
+           stop_early==True and stopping criteria met. 
         """
         batch_size, n_features = data.shape
         n_features, n_basis = dictionary.shape
@@ -166,24 +179,43 @@ class LCA(InferenceMethod):
             u = coeff_0.to(device)
         else:
             u = torch.zeros((batch_size, n_basis)).to(device)
+            
+        coefficients = torch.zeros((batch_size, 0, n_basis)).to(device)
 
         b = (dictionary.t()@data.t()).t()
         G = dictionary.t()@dictionary-torch.eye(n_basis).to(device)
         for i in range(self.n_iter):
+            # store old membrane potentials to evalute stop early condition
             if self.stop_early:
                 old_u = u.clone().detach()
+                
+             # check return all
+            if self.return_all is not 'none':
+                if self.return_all is 'active':
+                    coefficients = torch.concat([coefficients, self.threshold_nonlinearity(u).clone().unsqueeze(1)],dim=1)
+                else:
+                    coefficients = torch.concat([coefficients, u.clone().unsqueeze(1)],dim=1)
 
+            # compute new 
             a = self.threshold_nonlinearity(u)
             du = self.grad(b, G, u, a)
             u = u + self.coeff_lr*du
-
+            
+            # check stopping condition
             if self.stop_early:
                 if torch.linalg.norm(old_u - u)/torch.linalg.norm(old_u) < self.epsilon:
                     break
-            self.checknan(u, 'coefficients')
 
-        coefficients = self.threshold_nonlinearity(u)
-        return coefficients
+            self.checknan(u, 'coefficients')
+            
+        # return active units if return_all in ['none','active']
+        if self.return_all is 'active':
+            final_coefficients = self.threshold_nonlinearity(u)
+            coefficients = torch.concat([coefficients, final_coefficients.clone().unsqueeze(1)],dim=1)
+        else:
+            coefficients = torch.concat([coefficients, self.threshold_nonlinearity(u).clone().unsqueeze(1)],dim=1)
+
+        return coefficients.squeeze()
 
 
 class Vanilla(InferenceMethod):
@@ -237,7 +269,6 @@ class Vanilla(InferenceMethod):
             self.sparsity_penalty*torch.sign(a)
         return da
     
-             
     def infer(self, data, dictionary, coeff_0=None):
         """
         Infer coefficients using provided dictionary
