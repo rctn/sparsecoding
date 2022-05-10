@@ -209,11 +209,11 @@ class LCA(InferenceMethod):
             self.checknan(u, 'coefficients')
             
         # return active units if return_all_coefficients in ['none','active']
-        if self.return_all_coefficients is 'active':
+        if self.return_all_coefficients is 'membrane':
+            coefficients = torch.concat([coefficients, u.clone().unsqueeze(1)],dim=1)
+        else:
             final_coefficients = self.threshold_nonlinearity(u)
             coefficients = torch.concat([coefficients, final_coefficients.clone().unsqueeze(1)],dim=1)
-        else:
-            coefficients = torch.concat([coefficients, u.clone().unsqueeze(1)],dim=1)
 
         return coefficients.squeeze()
 
