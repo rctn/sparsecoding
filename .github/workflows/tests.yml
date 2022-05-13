@@ -1,8 +1,12 @@
 name: "Testing"
 
-on: 
+on:
   push:
-    branches: [main,unit-test]
+    paths-ignore:
+    - 'tutorials/**'
+    - 'README.md'
+    - '.gitignore'
+    - 'examples/**'
 
 jobs:
   build:
