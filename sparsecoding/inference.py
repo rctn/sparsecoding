@@ -37,6 +37,7 @@ class InferenceMethod:
         '''
         raise NotImplementedError
 
+
     def infer(self,dictionary,data,coeff_0=None,use_checknan=False):
         '''
         Infer the coefficients given a dataset and dictionary.
@@ -167,6 +168,7 @@ class LCA(InferenceMethod):
         use_checknan : boolean (1,) default=False
             check for nans in coefficients on each iteration. Setting this to False
             can speed up inference time
+
         Returns
         -------
         coefficients : (n_samples,n_basis) OR (n_samples,<=(n_iter+1),n_basis)
@@ -276,6 +278,7 @@ class Vanilla(InferenceMethod):
         da = (dictionary.t()@residual.t()).t() - \
             self.sparsity_penalty*torch.sign(a)
         return da
+
 
     def infer(self, data, dictionary, coeff_0=None, use_checknan=False):
         """
@@ -586,5 +589,84 @@ class LSM(InferenceMethod):
         # Sparsify the final solution by discarding the small coefficients
         coefficients.data[torch.abs(coefficients.data)
                           < self.sparse_threshold] = 0
+
+        return coefficients.detach()
+
+
+
+class PyTorchOptimizer(InferenceMethod):
+    """
+    Infer coefficients using provided loss functional and optimizer
+    """
+
+
+    def __init__(self,optimizer_f,loss_f,n_iter=100,solver=None):
+        '''
+
+        Parameters
+        ----------
+        optimizer : pytorch optimizer function handle
+
+        loss_f : function handle
+            must have parameters:
+                 (data, dictionary, coefficients)
+            where data is of size (batch_size,n_features)
+            and loss_f must return tensor of size (batch_size,)
+        n_iter : scalar (1,) default=100
+          number of iterations to run for an optimizer
+        solver : default=None
+        '''
+        super().__init__(solver)
+        self.optimizer_f = optimizer_f
+        self.loss_f = loss_f
+        self.n_iter = n_iter
+
+
+    def infer(self, data, dictionary, coeff_0=None):
+        """
+        Infer coefficients for each image in data using dict elements dictionary using Laplacian Scale Mixture (LSM)
+
+        Parameters
+        ----------
+        data : array-like (batch_size, n_features)
+          data to be used in sparse coding
+
+        dictionary : array-like, (n_features, n_basis)
+          dictionary to be used to get the coefficients
+
+        Returns
+        -------
+        coefficients : array-like (batch_size, n_basis)
+        """
+        # Get input characteristics
+        batch_size, n_features = data.shape
+        n_features, n_basis = dictionary.shape
+        device = dictionary.device
+
+        # Initialize coefficients for the whole batch
+
+        # initialize
+        if coeff_0 is not None:
+            coefficients = coeff_0.requires_grad_(True)
+        else:
+            coefficients = torch.zeros((batch_size, n_basis),requires_grad=True,device=device)
+
+        optimizer = self.optimizer_f([coefficients])
+
+        for i in range(self.n_iter):
+
+            # compute LSM loss for the current iteration
+            loss = self.loss_f(data=data,
+                               dictionary=dictionary,
+                               coefficients=coefficients
+            )
+
+            optimizer.zero_grad()
+
+            # Backward pass: compute gradient of the loss with respect to model parameters
+            loss.backward(torch.ones((batch_size,),device=device))
+
+            # Calling the step function on an Optimizer makes an update to its parameters
+            optimizer.step()
 
         return coefficients.detach()
