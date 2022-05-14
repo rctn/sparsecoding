@@ -310,7 +310,7 @@ class Vanilla(InferenceMethod):
         coeff_0 : array-like (n_samples, n_basis), optional
             Initial coefficient values
         use_checknan : boolean, default=False
-            check for nans in coefficients on each iteration. Setting this to 
+            check for nans in coefficients on each iteration. Setting this to
             False can speed up inference time
         Returns
         -------
