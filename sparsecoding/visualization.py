@@ -7,43 +7,37 @@ import matplotlib.pyplot as plt
 # TODO: Combine/refactor plot_dictionary and plot_patches; lots of repeated code.
 # TODO: Add method for visualizing coefficients.
 # TODO: Add method for visualizing reconstructions and original patches.
-def plot_dictionary(dictionary,
-                    color=False,
-                    nrow=30,
-                    normalize=True,
-                    scale_each=True,
-                    fig=None,
-                    ax=None,
-                    title='',
-                    size=8):
-    '''
+def plot_dictionary(dictionary, color=False, nrow=30, normalize=True,
+                    scale_each=True, fig=None, ax=None, title='', size=8):
+    """Plot all elements of dictionary in grid
+
     Parameters
     ----------
-    dictionary : scalar (n_features,n_basis)
-
-    color : boolean (1,) default=False
-        set True if dictionary 3 channel (color)
-    nrow : scalar (1,) default=30
-        number of dictionary elements in a row
-    normalize : boolean (1,) default=True
-        normalize to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
-    scale_each : boolean (1,) default=True
-        scale each element to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
-    fig : matplotlib.pyplot figure handle default=None
-        if not provided, new handle created and returned
-    ax : matplotlib.pyplot axes handle default=None
-        if not provided, new handle created and returned
-    title : string (1,) default=''
-        title of plot
-    size : scalar (1,) default=8
-       plot size (inches)
+    dictionary : array-like (n_features,n_basis)
+        Dictionary
+    color : boolean, default=False
+        Set True if dictionary 3 channel (color)
+    nrow : int, default=30
+        Number of dictionary elements in a row
+    normalize : boolean, default=True
+        Normalize to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
+    scale_each : boolean, default=True
+        Scale each element to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
+    fig : matplotlib.pyplot figure handle, optional
+        If not provided, new handle created and returned
+    ax : matplotlib.pyplot axes handle, optional
+        If not provided, new handle created and returned
+    title : str, optional
+        Title of plot
+    size : float, default=8
+        Plot size (inches)
 
     Returns
     -------
     fig : matplotlib.pyplot figure handle
 
     ax : matplotlib.pyplot axes handle
-    '''
+    """
 
     n_features, n_basis = dictionary.shape
 
@@ -58,7 +52,7 @@ def plot_dictionary(dictionary,
     grid_img = torchvision.utils.make_grid(
         D_imgs, nrow=nrow, normalize=normalize, scale_each=scale_each).cpu()
 
-    if fig == None or ax == None:
+    if fig is None or ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(size, size))
 
     ax.clear()
@@ -70,39 +64,36 @@ def plot_dictionary(dictionary,
     return fig, ax
 
 
-def plot_patches(patches,
-                 color=False,
-                 normalize=True,
-                 scale_each=True,
-                 fig=None,
-                 ax=None,
-                 title='',
-                 size=8):
-    '''
+def plot_patches(patches, color=False, normalize=True, scale_each=True,
+                 fig=None, ax=None, title='', size=8):
+    """
     Parameters
     ----------
-    patches : scalar (batch_size, n_pixels)
-    color : boolean (1,) default=False
-        set True if dictionary 3 channel (color)
-    normalize : boolean (1,) default=True
-        normalize to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
-    scale_each : boolean (1,) default=True
-        scale each element to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
-    fig : matplotlib.pyplot figure handle default=None
-        if not provided, new handle created and returned
-    ax : matplotlib.pyplot axes handle default=None
-        if not provided, new handle created and returned
-    title : string (1,) default=''
-        title of plot
-    size : scalar (1,) default=8
-       plot size (inches)
+    patches : array-like (batch_size, n_pixels)
+        Image patches
+    color : boolean, default=False
+        Set True if dictionary 3 channel (color)
+    nrow : int, default=30
+        Number of dictionary elements in a row
+    normalize : boolean, default=True
+        Normalize to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
+    scale_each : boolean, default=True
+        Scale each element to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
+    fig : matplotlib.pyplot figure handle, optional
+        If not provided, new handle created and returned
+    ax : matplotlib.pyplot axes handle, optional
+        If not provided, new handle created and returned
+    title : str, optional
+        Title of plot
+    size : float, default=8
+        Plot size (inches)
 
     Returns
     -------
     fig : matplotlib.pyplot figure handle
 
     ax : matplotlib.pyplot axes handle
-    '''
+    """
 
     batch_size = patches.shape[0]
     nrow = int(np.sqrt(patches.shape[0]))
