@@ -110,7 +110,7 @@ def plot_patches(patches, color=False, normalize=True, scale_each=True,
     grid_img = make_grid(
         D_imgs, nrow=nrow, normalize=normalize, scale_each=scale_each).cpu()
 
-    if fig == None or ax == None:
+    if fig is None or ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(size, size))
 
     ax.clear()
