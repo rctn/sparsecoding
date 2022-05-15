@@ -15,20 +15,20 @@ The following are some guidelines on how new code should be written. Of course, 
 When writing docstrings, please follow the following example.
 
 ```
-def count_beans(self, cans, use_gpu=False, foo="vector"
+def count_beans(self, baz, use_gpu=False, foo="vector"
                 bar=None):
    """Write a one-line summary for the method.
 
    Parameters
    ----------
-   banana : array-like, shape [..., dim]
-      Write a short description of parameter banana.
+   baz : array-like, shape [..., dim]
+      Write a short description of parameter baz.
    use_gpu : bool, default=False
       Write a short description of parameter use_gpu.
    foo : str, {"vector", "matrix"}, default="vector"
       Write a short description of parameter foo.
-    foo : array-like, shape [...,], optional
-      Write a short description of parameter foo.
+   bar : array-like, shape [...,], optional
+      Write a short description of parameter bar.
 
    Returns
    -------
@@ -49,5 +49,9 @@ def count_beans(self, cans, use_gpu=False, foo="vector"
    ---------
    If relevant, provide a reference with associated pdf or
    wikipedia page.
+   ex: 
+   [1] Einstein, A., Podolsky, B., & Rosen, N. (1935). Can 
+   quantum-mechanical description of physical reality be 
+   considered complete?. Physical review, 47(10), 777.
    """
 ```
