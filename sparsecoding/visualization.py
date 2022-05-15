@@ -13,15 +13,15 @@ def plot_dictionary(dictionary, color=False, nrow=30, normalize=True,
 
     Parameters
     ----------
-    dictionary : array-like (n_features,n_basis)
+    dictionary : array-like, shape [n_features, n_basis]    
         Dictionary
-    color : boolean, default=False
+    color : bool, default=False
         Set True if dictionary 3 channel (color)
     nrow : int, default=30
         Number of dictionary elements in a row
-    normalize : boolean, default=True
+    normalize : bool, default=True
         Normalize to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
-    scale_each : boolean, default=True
+    scale_each : bool, default=True
         Scale each element to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
     fig : matplotlib.pyplot figure handle, optional
         If not provided, new handle created and returned
@@ -69,15 +69,15 @@ def plot_patches(patches, color=False, normalize=True, scale_each=True,
     """
     Parameters
     ----------
-    patches : array-like (batch_size, n_pixels)
+    patches : array-like, shape [batch_size, n_pixels]
         Image patches
-    color : boolean, default=False
+    color : bool, default=False
         Set True if dictionary 3 channel (color)
     nrow : int, default=30
         Number of dictionary elements in a row
-    normalize : boolean, default=True
+    normalize : bool, default=True
         Normalize to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
-    scale_each : boolean, default=True
+    scale_each : bool, default=True
         Scale each element to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
     fig : matplotlib.pyplot figure handle, optional
         If not provided, new handle created and returned
