@@ -41,10 +41,15 @@ class SparseCoding(torch.nn.Module):
 
         Parameters
         ----------
-        data : torch.tensor (batch_size,n_features)
+        data : array-like, shape [batch_size, n_features]
             input data
-        a : torch.tensor (batch_size,n_basis)
+        a : array-like, shape [batch_size, n_basis]
             already-inferred coefficients
+
+        Returns
+        -------
+        dictionary_grad : array-like, shape [n_features, n_basis]
+            gradient of dictionary
         """
         residual = data - torch.mm(self.dictionary, a.t()).t()
         dictionary_grad = torch.mm(residual.t(), a)
@@ -56,9 +61,9 @@ class SparseCoding(torch.nn.Module):
 
         Parameters
         ----------
-        data : array-like (batch_size,n_features)
+        data : array-like, shape [batch_size,n_features]
             Input data
-        a : array-like (batch_size, n_basis)
+        a : array-like, shape [batch_size, n_basis]
             Already-inferred coefficients
         """
         dictionary_grad = self.compute_grad_dict(data, a)
@@ -67,8 +72,7 @@ class SparseCoding(torch.nn.Module):
         self.checknan()
 
     def normalize_dictionary(self):
-        """Normalize columns of dictionary matrix to unit norm
-        """
+        """Normalize columns of dictionary matrix to unit norm."""
         self.dictionary = self.dictionary.div_(self.dictionary.norm(p=2,dim=0))
         self.checknan()
 
@@ -77,7 +81,7 @@ class SparseCoding(torch.nn.Module):
 
         Parameters
         ----------
-        dataset : torch.utils.data.Dataset or array-like (n_samples, n_features)
+        dataset : torch.utils.data.Dataset or array-like, shape [n_samples, n_features]
             Input dataset
         n_epoch : int
             Iumber of iterations to learn dictionary
@@ -86,7 +90,7 @@ class SparseCoding(torch.nn.Module):
 
         Returns
         -------
-        array-like (nepoch,)
+        losses : array-like, shape [nepoch,]
             Model losses (i.e., energy for the Boltzmann enthusiasts) after
             each dictionary update
         """
@@ -123,9 +127,9 @@ class SparseCoding(torch.nn.Module):
 
         Parameters
         ----------
-        data : array-like (batch_size, n_features)
+        data : array-like, shape [batch_size, n_features]
 
-        a : array-like (batch_size, n_basis)
+        a : array-like, shape [batch_size, n_basis]
             inferred coefficients
 
         Returns
@@ -145,7 +149,8 @@ class SparseCoding(torch.nn.Module):
 
         Returns
         -------
-        array-like (n_features,n_basis)
+        dictionary : array-like, shape [n_features,n_basis]
+            numpy array dictionary
         """
         return self.dictionary.cpu().detach().numpy()
 
@@ -154,7 +159,7 @@ class SparseCoding(torch.nn.Module):
 
         Parameters
         ----------
-        data : array-like (any-shape), optional
+        data : array-like, optional
             Data to check for nans
         name : str, optional
             Name to add to error, if one is thrown
@@ -174,7 +179,7 @@ class SparseCoding(torch.nn.Module):
 
         Parameters
         ----------
-        dictionary : array-like (n_features, n_basis)
+        dictionary : array-like, shape [n_features, n_basis]
             Dictionary to set default dictionary to
         """
         self.dictionary = dictionary.to(self.device)
@@ -196,8 +201,7 @@ class SparseCoding(torch.nn.Module):
         self.set_dictionary(dictionary)
 
     def save_dictionary(self, filename):
-        """
-        Save dictionary to pkl dump
+        """Save dictionary to pkl dump
 
         Parameters
         ----------
