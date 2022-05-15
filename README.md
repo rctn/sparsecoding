@@ -20,4 +20,4 @@ Reference sparse coding implementations for efficient learning and inference.
 6. Try running the demo notebook: `examples/sparse_coding.ipynb`
 
 # Contributing
-See the [contributing](https://github.com/rctn/sparsecoding/blob/formatting/docs/contributing.md) document!
+See the [contributing](https://github.com/rctn/sparsecoding/blob/main/docs/contributing.md) document!
