@@ -1,10 +1,10 @@
-# Sparsecoding
-Reference sparse coding implementations for efficient learning and inference.
+# Sparse Coding
+Reference sparse coding implementations for efficient learning and inference implemented in PyTorch with GPU support. 
 
 ## Dictionary Learning
-* Classic sparse coding dictionary learning implemented, formulated as $\mathbf{x} = \mathbf{\Phi a} + \mathbf{n}$ where inner loop of coefficient inference occurs for $\mathbf{a}$, with outer loop of dictionary updates on $\mathbf{\Phi}$.
+* Repo currently includes classic patch-wise sparse coding dictionary learning.
 
-## Implemented inference methods
+## Implemented Inference Methods
 * Locally Competative Algorithm (LCA)
 * Gradient Descent with Euler's method on Laplace Prior (Vanilla)
 * Laplacian Scale Mixture (LSM)
