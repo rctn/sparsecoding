@@ -20,7 +20,6 @@ class InferenceMethod:
 
         Returns
         -------
-
         """
         raise NotImplementedError
 
@@ -40,18 +39,18 @@ class InferenceMethod:
 
         Parameters
         ----------
-        dictionary : array-like (n_features,n_basis)
+        dictionary : array-like, shape [n_features,n_basis]
 
-        data : array-like (n_samples,n_features)
+        data : array-like, shape [n_samples,n_features]
 
-        coeff_0 : array-like (n_samples,n_basis), optional
-            Initial coefficient values
-        use_checknan : boolean (1,), default=False
+        coeff_0 : array-like, shape [n_samples,n_basis], optional
+            Initial coefficient values.
+        use_checknan : bool, default=False
             Check for nans in coefficients on each iteration
 
         Returns
         -------
-        coefficients : array-like (n_samples,n_basis)
+        coefficients : array-like, shape [n_samples,n_basis]
         """
         raise NotImplementedError
 
@@ -90,12 +89,11 @@ class LCA(InferenceMethod):
             Update rate of coefficient dynamics
         threshold : float, default=0.1
             Threshold for non-linearity
-        stop_early : boolean, default=False
+        stop_early : bool, default=False
             Stops dynamics early based on change in coefficents
         epsilon : float, default=1e-2
             Only used if stop_early True, specifies criteria to stop dynamics
-        return_all_coefficients : str, default='none'
-            Options: ['none','membrane','active']
+        return_all_coefficients : str, {'none', 'membrane', 'active'}, default='none'
             Returns all coefficients during inference procedure if not equal
             to 'none'. If return_all_coefficients=='membrane', membrane
             potentials (u) returned. If return_all_coefficients=='active',
@@ -127,12 +125,12 @@ class LCA(InferenceMethod):
 
         Parameters
         ----------
-        u : array-like (batch_size, n_basis)
+        u : array-like, shape [batch_size, n_basis]
             Membrane potentials
 
         Returns
         -------
-        a : array-like (batch_size, n_basis)
+        a : array-like, shape [batch_size, n_basis]
             Activations
         """
         a = (torch.abs(u) - self.threshold).clamp(min=0.)
@@ -144,16 +142,16 @@ class LCA(InferenceMethod):
 
         Parameters
         ----------
-        b : array-like (batch_size, n_coefficients)
+        b : array-like, shape [batch_size, n_coefficients]
             Driver signal for coefficients
-        G : array-like (n_coefficients, n_coefficients)
+        G : array-like, shape [n_coefficients, n_coefficients]
             Inhibition matrix
-        a : array-like (batch_size, n_coefficients)
+        a : array-like, shape [batch_size, n_coefficients]
             Currently active coefficients
 
         Returns
         -------
-        du : array-like (batch_size, n_coefficients)
+        du : array-like, shape [batch_size, n_coefficients]
             Gradient of membrane potentials
         """
         du = b-u-(G@a.t()).t()
@@ -164,23 +162,23 @@ class LCA(InferenceMethod):
 
         Parameters
         ----------
-        dictionary : array-like (n_features, n_basis)
+        dictionary : array-like, shape [n_features, n_basis]
 
-        data : array-like (n_samples, n_features)
+        data : array-like, shape [n_samples, n_features]
 
-        coeff_0 : array-like (n_samples, n_basis), optional
+        coeff_0 : array-like, shape [n_samples, n_basis], optional
             Initial coefficient values
-        use_checknan : boolean, default=False
+        use_checknan : bool, default=False
             Check for nans in coefficients on each iteration. Setting this to
             False can speed up inference time.
 
         Returns
         -------
-        coefficients : array-like (n_samples, n_basis) OR (n_samples, <=(n_iter+1), n_basis)
+        coefficients : array-like, shape [n_samples, n_basis] OR [n_samples, n_iter+1, n_basis]
            First case occurs if return_all_coefficients == 'none'. If
            return_all_coefficients != 'none', returned shape is second case.
-           Returned dimension < occurs when stop_early==True and stopping
-           criteria met.
+           Returned dimension along dim 1 can be less than n_iter when
+           stop_early==True and stopping criteria met.
         """
         batch_size, n_features = data.shape
         n_features, n_basis = dictionary.shape
@@ -250,9 +248,9 @@ class Vanilla(InferenceMethod):
             Number of iterations to run
         coeff_lr : float, default=1e-3
             Update rate of coefficient dynamics
-        sparsity_penalty : float default=0.2
+        sparsity_penalty : float, default=0.2
 
-        stop_early : boolean, default=False
+        stop_early : bool, default=False
             Stops dynamics early based on change in coefficents
         epsilon : float, default=1e-2
             Only used if stop_early True, specifies criteria to stop dynamics
@@ -282,16 +280,16 @@ class Vanilla(InferenceMethod):
 
         Parameters
         ----------
-        residual : array-like (batch_size, n_features)
+        residual : array-like, shape [batch_size, n_features]
             Residual between reconstructed image and original
-        dictionary : array-like (n_features,n_coefficients)
+        dictionary : array-like, shape [n_features,n_coefficients]
             Dictionary
-        a : array-like (batch_size, n_coefficients)
+        a : array-like, shape [batch_size, n_coefficients]
             Coefficients
 
         Returns
         -------
-        da : array-like (batch_size, n_coefficients)
+        da : array-like, shape [batch_size, n_coefficients]
             Gradient of membrane potentials
         """
         da = (dictionary.t()@residual.t()).t() - \
@@ -303,22 +301,23 @@ class Vanilla(InferenceMethod):
 
         Parameters
         ----------
-        dictionary : array like (n_features, n_basis)
+        dictionary : array-like, shape [n_features, n_basis]
             Dictionary
-        data : array like (n_samples, n_features)
+        data : array like, shape [n_samples, n_features]
 
-        coeff_0 : array-like (n_samples, n_basis), optional
+        coeff_0 : array-like, shape [n_samples, n_basis], optional
             Initial coefficient values
-        use_checknan : boolean, default=False
+        use_checknan : bool, default=False
             check for nans in coefficients on each iteration. Setting this to
             False can speed up inference time
+
         Returns
         -------
-        coefficients : (n_samples, n_basis) OR (n_samples, <=(n_iter+1), n_basis)
-           First case occurs if return_all_coefficients is False. If
-           return_all_coefficients True, returned shape is second case.
-           Returned dimension < occurs when stop_early==True and stopping
-           criteria met.
+        coefficients : array-like, shape [n_samples, n_basis] OR [n_samples, n_iter+1, n_basis]
+           First case occurs if return_all_coefficients == 'none'. If
+           return_all_coefficients != 'none', returned shape is second case.
+           Returned dimension along dim 1 can be less than n_iter when
+           stop_early==True and stopping criteria met.
         """
         batch_size, n_features = data.shape
         n_features, n_basis = dictionary.shape
@@ -367,9 +366,9 @@ class ISTA(InferenceMethod):
         ----------
         n_iter : int, default=100
             Number of iterations to run
-        sparsity_penalty : flaot, default=0.2
+        sparsity_penalty : float, default=0.2
 
-        stop_early : boolean, default=False
+        stop_early : bool, default=False
             Stops dynamics early based on change in coefficents
         epsilon : float, default=1e-2
             Only used if stop_early True, specifies criteria to stop dynamics
@@ -399,12 +398,12 @@ class ISTA(InferenceMethod):
 
         Parameters
         ----------
-        u : array-like (batch_size, n_basis)
+        u : array-likes, shape [batch_size, n_basis]
             Membrane potentials
 
         Returns
         -------
-        a : array-like (batch_size, n_basis)
+        a : array-like, shape [batch_size, n_basis]
             activations
         """
         a = (torch.abs(u) - self.threshold).clamp(min=0.)
@@ -417,22 +416,22 @@ class ISTA(InferenceMethod):
 
         Parameters
         ----------
-        data : array-like (batch_size, n_features)
+        data : array-like, shape [batch_size, n_features]
 
-        dictionary : array-like, (n_features, n_basis)
+        dictionary : array-like, shape [n_features, n_basis]
 
-        coeff_0 : array-like (n_samples, n_basis), optional
+        coeff_0 : array-like, shape [n_samples, n_basis], optional
             Initial coefficient values
-        use_checknan : boolean, default=False
+        use_checknan : bool, default=False
             Check for nans in coefficients on each iteration. Setting this to
             False can speed up inference time.
         Returns
         -------
-        coefficients : (n_samples, n_basis) OR (n_samples, <=(n_iter+1), n_basis)
-           First case occurs if return_all_coefficients is False. If
-           return_all_coefficients True, returned shape is second case
-           Returned dimension < occurs when stop_early==True and stopping
-           criteria met.
+        coefficients : array-like, shape [n_samples, n_basis] OR [n_samples, n_iter+1, n_basis]
+           First case occurs if return_all_coefficients == 'none'. If
+           return_all_coefficients != 'none', returned shape is second case.
+           Returned dimension along dim 1 can be less than n_iter when
+           stop_early==True and stopping criteria met.
         """
         batch_size = data.shape[0]
         n_basis = dictionary.shape[1]
@@ -506,7 +505,7 @@ class LSM(InferenceMethod):
         sparse_threshold : float, default=10**-2
             Threshold used to discard smallest coefficients in the final
             solution SM parameter used to compute the loss function
-        return_all_coefficients : str, default=False
+        return_all_coefficients : bool, default=False
             Returns all coefficients during inference procedure if True
             User beware: If n_iter is large, setting this parameter to True
             can result in large memory usage/potential exhaustion. This
@@ -534,20 +533,20 @@ class LSM(InferenceMethod):
 
         Parameters
         ----------
-        data : array-like (batch_size, n_features)
+        data : array-like, shape [batch_size, n_features]
             Data to be used in sparse coding
-        dictionary : array-like, (n_features, n_basis)
+        dictionary : array-like, shape [n_features, n_basis]
             Dictionary to be used
-        coefficients : array-like (batch_size, n_basis)
+        coefficients : array-like, shape [batch_size, n_basis]
             The current values of coefficients
-        lambdas : array-like (batch_size, n_basis)
+        lambdas : array-like, shape [batch_size, n_basis]
             The current values of regularization coefficient for all basis
         sigma : float, default=0.005
             LSM parameter used to compute the loss functions
 
         Returns
         -------
-        loss : array-like (batch_size, 1)
+        loss : array-like, shape [batch_size, 1]
             Loss values for each data sample
         """
 
@@ -564,14 +563,14 @@ class LSM(InferenceMethod):
 
         Parameters
         ----------
-        data : array-like (batch_size, n_features)
+        data : array-like, shape [batch_size, n_features]
             Data to be used in sparse coding
-        dictionary : array-like, (n_features, n_basis)
+        dictionary : array-like, shape [n_features, n_basis]
             Dictionary to be used to get the coefficients
 
         Returns
         -------
-        coefficients : array-like (batch_size, n_basis)
+        coefficients : array-like, shape [batch_size, n_basis]
         """
         # Get input characteristics
         batch_size, n_features = data.shape
@@ -634,12 +633,12 @@ class PyTorchOptimizer(InferenceMethod):
         optimizer : function handle
             Pytorch optimizer handle have single parameter:
                 (coefficients)
-            where coefficients is of shape (batch_size, n_basis)
+            where coefficients is of shape [batch_size, n_basis]
         loss_f : function handle
             Must have parameters:
                  (data, dictionary, coefficients)
-            where data is of shape (batch_size, n_features)
-            and loss_f must return tensor of size (batch_size,)
+            where data is of shape [batch_size, n_features]
+            and loss_f must return tensor of size [batch_size,]
         n_iter : int, default=100
             Number of iterations to run for an optimizer
         solver : default=None
@@ -656,15 +655,15 @@ class PyTorchOptimizer(InferenceMethod):
 
         Parameters
         ----------
-        data : array-like (batch_size, n_features)
+        data : array-like, shape [batch_size, n_features]
           Data to be used in sparse coding
 
-        dictionary : array-like, (n_features, n_basis)
+        dictionary : array-like, shape [n_features, n_basis]
           Dictionary to be used to get the coefficients
 
         Returns
         -------
-        coefficients : array-like (batch_size, n_basis)
+        coefficients : array-like, shape [batch_size, n_basis]
         """
         # Get input characteristics
         batch_size, n_features = data.shape
