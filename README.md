@@ -9,7 +9,7 @@ Reference sparse coding implementations for efficient learning and inference imp
 * Gradient Descent with Euler's method on Laplace Prior (Vanilla)
 * Laplacian Scale Mixture (LSM)
 * Iterative Shrinkage-threshold Algorithm (ISTA)
-* Genertic PyTorch minimization of arbitraty loss function (PyTorchOptimizer)
+* Generic PyTorch minimization of arbitrary loss function (PyTorchOptimizer)
 
 # Setup
 1. Clone the repo.
