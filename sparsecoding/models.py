@@ -31,7 +31,7 @@ class SparseCoding(torch.nn.Module):
         self.n_basis = n_basis
         self.n_features = n_features
         self.device = torch.device("cpu") if device is None else device
-        self.dictionary_lr = torch.tensor(np.float32(kwargs.pop('dictionary_lr', 1e-2))).to(self.device)
+        self.dictionary_lr = torch.tensor(np.float32(kwargs.pop("dictionary_lr", 1e-2))).to(self.device)
         self.sparsity_penalty = torch.tensor(np.float32(sparsity_penalty)).to(self.device)
         self.dictionary = torch.randn((self.n_features, self.n_basis)).to(self.device)
         self.normalize_dictionary()
@@ -154,7 +154,7 @@ class SparseCoding(torch.nn.Module):
         """
         return self.dictionary.cpu().detach().numpy()
 
-    def checknan(self, data=torch.tensor(0), name='data'):
+    def checknan(self, data=torch.tensor(0), name="data"):
         """Check for nan values in dictinary, or data
 
         Parameters
@@ -170,9 +170,9 @@ class SparseCoding(torch.nn.Module):
             If nan is found in data
         """
         if torch.isnan(data).any():
-            raise ValueError('sparsecoding error: nan in %s.' % (name))
+            raise ValueError("sparsecoding error: nan in %s." % (name))
         if torch.isnan(self.dictionary).any():
-            raise ValueError('sparsecoding error: nan in dictionary.')
+            raise ValueError("sparsecoding error: nan in dictionary.")
 
     def set_dictionary(self, dictionary):
         """Set model dictionary to passed dictionary
@@ -194,7 +194,7 @@ class SparseCoding(torch.nn.Module):
         filename : str
             File to load dictionary from
         """
-        file = open(filename, 'rb')
+        file = open(filename, "rb")
         dictionary = pkl.load(file)
         dictionary = torch.tensor(dictionary.astype(np.float32))
         file.close()

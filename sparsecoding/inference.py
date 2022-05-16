@@ -55,14 +55,14 @@ class InferenceMethod:
         raise NotImplementedError
 
     @staticmethod
-    def checknan(data=torch.tensor(0), name='data'):
+    def checknan(data=torch.tensor(0), name="data"):
         """Check for nan values in data.
 
         Parameters
         ----------
         data : array-like, optional
             Data to check for nans
-        name : str, default='data'
+        name : str, default="data"
             Name to add to error, if one is thrown
 
         Raises
@@ -71,13 +71,13 @@ class InferenceMethod:
             If the nan found in data
         """
         if torch.isnan(data).any():
-            raise ValueError('InferenceMethod error: nan in %s.' % (name))
+            raise ValueError("InferenceMethod error: nan in %s." % (name))
 
 
 class LCA(InferenceMethod):
     def __init__(self, n_iter=100, coeff_lr=1e-3, threshold=0.1,
                  stop_early=False, epsilon=1e-2, solver=None,
-                 return_all_coefficients='none'):
+                 return_all_coefficients="none"):
         """Method implemented according locally competative algorithm (LCA)
         with the ideal soft thresholding function.
 
@@ -93,10 +93,10 @@ class LCA(InferenceMethod):
             Stops dynamics early based on change in coefficents
         epsilon : float, default=1e-2
             Only used if stop_early True, specifies criteria to stop dynamics
-        return_all_coefficients : str, {'none', 'membrane', 'active'}, default='none'
+        return_all_coefficients : str, {"none", "membrane", "active"}, default="none"
             Returns all coefficients during inference procedure if not equal
-            to 'none'. If return_all_coefficients=='membrane', membrane
-            potentials (u) returned. If return_all_coefficients=='active',
+            to "none". If return_all_coefficients=="membrane", membrane
+            potentials (u) returned. If return_all_coefficients=="active",
             active units (a) (output of thresholding function over u) returned.
             User beware: if n_iter is large, setting this parameter to True
             can result in large memory usage/potential exhaustion. This
@@ -115,9 +115,9 @@ class LCA(InferenceMethod):
         self.stop_early = stop_early
         self.epsilon = epsilon
         self.n_iter = n_iter
-        if return_all_coefficients not in ['none', 'membrane', 'active']:
+        if return_all_coefficients not in ["none", "membrane", "active"]:
             raise ValueError("Invalid input for return_all_coefficients. Valid"
-                             "inputs are: \'none\', \'membrane\', \'active\'.")
+                             "inputs are: \"none\", \"membrane\", \"active\".")
         self.return_all_coefficients = return_all_coefficients
 
     def threshold_nonlinearity(self, u):
@@ -175,8 +175,8 @@ class LCA(InferenceMethod):
         Returns
         -------
         coefficients : array-like, shape [n_samples, n_basis] OR [n_samples, n_iter+1, n_basis]
-           First case occurs if return_all_coefficients == 'none'. If
-           return_all_coefficients != 'none', returned shape is second case.
+           First case occurs if return_all_coefficients == "none". If
+           return_all_coefficients != "none", returned shape is second case.
            Returned dimension along dim 1 can be less than n_iter when
            stop_early==True and stopping criteria met.
         """
@@ -200,8 +200,8 @@ class LCA(InferenceMethod):
                 old_u = u.clone().detach()
 
             # check return all
-            if self.return_all_coefficients != 'none':
-                if self.return_all_coefficients == 'active':
+            if self.return_all_coefficients != "none":
+                if self.return_all_coefficients == "active":
                     coefficients = torch.concat([coefficients,
                                                 self.threshold_nonlinearity(u).clone().unsqueeze(1)], dim=1)
                 else:
@@ -220,10 +220,10 @@ class LCA(InferenceMethod):
                     break
 
             if use_checknan:
-                self.checknan(u, 'coefficients')
+                self.checknan(u, "coefficients")
 
-        # return active units if return_all_coefficients in ['none','active']
-        if self.return_all_coefficients == 'membrane':
+        # return active units if return_all_coefficients in ["none","active"]
+        if self.return_all_coefficients == "membrane":
             coefficients = torch.concat([coefficients,
                                         u.clone().unsqueeze(1)], dim=1)
         else:
@@ -314,8 +314,8 @@ class Vanilla(InferenceMethod):
         Returns
         -------
         coefficients : array-like, shape [n_samples, n_basis] OR [n_samples, n_iter+1, n_basis]
-           First case occurs if return_all_coefficients == 'none'. If
-           return_all_coefficients != 'none', returned shape is second case.
+           First case occurs if return_all_coefficients == "none". If
+           return_all_coefficients != "none", returned shape is second case.
            Returned dimension along dim 1 can be less than n_iter when
            stop_early==True and stopping criteria met.
         """
@@ -351,7 +351,7 @@ class Vanilla(InferenceMethod):
             residual = data - (dictionary@a.t()).t()
 
             if use_checknan:
-                self.checknan(a, 'coefficients')
+                self.checknan(a, "coefficients")
 
         coefficients = torch.concat([coefficients, a.clone().unsqueeze(1)],dim=1)
         return torch.squeeze(coefficients)
@@ -428,8 +428,8 @@ class ISTA(InferenceMethod):
         Returns
         -------
         coefficients : array-like, shape [n_samples, n_basis] OR [n_samples, n_iter+1, n_basis]
-           First case occurs if return_all_coefficients == 'none'. If
-           return_all_coefficients != 'none', returned shape is second case.
+           First case occurs if return_all_coefficients == "none". If
+           return_all_coefficients != "none", returned shape is second case.
            Returned dimension along dim 1 can be less than n_iter when
            stop_early==True and stopping criteria met.
         """
@@ -475,7 +475,7 @@ class ISTA(InferenceMethod):
             u = self.coefficients
 
             if use_checknan:
-                self.checknan(u, 'coefficients')
+                self.checknan(u, "coefficients")
 
         coefficients = torch.concat([coefficients,
                                     self.coefficients.clone().unsqueeze(1)], dim=1)

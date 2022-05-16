@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 # TODO: Add method for visualizing coefficients.
 # TODO: Add method for visualizing reconstructions and original patches.
 def plot_dictionary(dictionary, color=False, nrow=30, normalize=True,
-                    scale_each=True, fig=None, ax=None, title='', size=8):
+                    scale_each=True, fig=None, ax=None, title="", size=8):
     """Plot all elements of dictionary in grid
 
     Parameters
@@ -65,7 +65,7 @@ def plot_dictionary(dictionary, color=False, nrow=30, normalize=True,
 
 
 def plot_patches(patches, color=False, normalize=True, scale_each=True,
-                 fig=None, ax=None, title='', size=8):
+                 fig=None, ax=None, title="", size=8):
     """
     Parameters
     ----------
