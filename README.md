@@ -19,5 +19,7 @@ Reference sparse coding implementations for efficient learning and inference imp
 5. Install the natural images dataset from this link: https://rctn.org/bruno/sparsenet/IMAGES.mat
 6. Try running the demo notebook: `examples/sparse_coding.ipynb`
 
+Note: If you are using a jupyter notebook, you will need to restart the jupyter kernel each time you change a source file.
+
 # Contributing
 See the [contributing](https://github.com/rctn/sparsecoding/blob/main/docs/contributing.md) document!
