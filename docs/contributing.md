@@ -1,14 +1,29 @@
 # Contributing
-All contributions welcome!
+All contributions are welcome!
 
 ## Bug Reporting
 If you find a bug, submit a bug report on GitHub Issues. 
 
-## Coding Style Guidelines
-The following are some guidelines on how new code should be written. Of course, there are special cases and there will be exceptions to these rules. 
+## Adding Features/Fixing Bugs
+If you have identified a new feature or bug that you can fix yourself, please follow the following procedure.
 
-1. Format code in accordance with flake8 standard.
-2. Use underscores to separate words in non class names: `n_samples` rather than `nsamples`.
+1. Clone `main` branch.
+2. Create a new branch to contain your changes. 
+2. `add`, `commit`, and `push` your changes to this branch. 
+3. Create a pull request (PR). See more information on submitting a PR request below.
+
+### Submitting a Pull Request
+1. If necessary, please **write your own unit tests** and add them to [the tests directory](https://github.com/rctn/sparsecoding/blob/main/docs/contributing.md). 
+2. Verify that all tests are passed by running `python -m unittest tests/*`.
+3. Be sure that your PR follows formatting guidelines, [PEP8](https://peps.python.org/pep-0008/) and [flake8](https://flake8.pycqa.org/en/latest/). 
+4. Make sure the title of your PR summarizes the features/issues resolved in your branch. 
+5. Submit your pull request and add reviewers. 
+
+## Coding Style Guidelines
+The following are some guidelines on how new code should be written. Of course, there are special cases, and there will be exceptions to these rules. 
+
+1. Format code in accordance with [flake8](https://flake8.pycqa.org/en/latest/) standard.
+2. Use underscores to separate words in non-class names: `n_samples` rather than `nsamples`.
 3. Avoid single-character variable names.
 
 ## Docstrings
