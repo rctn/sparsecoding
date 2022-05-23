@@ -6,8 +6,8 @@ import torch
 from sparsecoding import inference
 
 
-class TestVanilla(TestCase):
-    '''Test Vanilla inference algorithm'''
+class TestEuler(TestCase):
+    '''Test Euler inference algorithm'''
 
     def test_coefficient_shapes(self):
 
@@ -22,26 +22,26 @@ class TestVanilla(TestCase):
             self.assertEqual(a.shape, (bars.n_samples, inference_method.n_iter+1, bars.n_basis))
 
         # generic
-        inference_method = inference.Vanilla(n_iter=10)
+        inference_method = inference.Euler(n_iter=10)
         evaluate(torch.device('cpu'))
         if torch.cuda.is_available():
             evaluate(torch.device('cuda'))
 
         # stop early condition
-        inference_method = inference.Vanilla(n_iter=10, stop_early=True)
+        inference_method = inference.Euler(n_iter=10, stop_early=True)
         evaluate(torch.device('cpu'))
         if torch.cuda.is_available():
             evaluate(torch.device('cuda'))
 
         # return_all_coefficients=True
-        inference_method = inference.Vanilla(n_iter=10, return_all_coefficients=True)
+        inference_method = inference.Euler(n_iter=10, return_all_coefficients=True)
         evalute_return_all_coefficients(torch.device('cpu'))
         if torch.cuda.is_available():
             evalute_return_all_coefficients(torch.device('cuda'))
 
     def test_bars(self):
         '''Evaluate quality of coefficient inference on bars dataset'''
-        inference_method = inference.Vanilla(coeff_lr=5e-3, n_iter=100)
+        inference_method = inference.Euler(coeff_lr=5e-3, n_iter=100)
         cpudevice = torch.device('cpu')
         # coefficients do not go identically to zero - very relaxed criteria
         rtol = 1e-1

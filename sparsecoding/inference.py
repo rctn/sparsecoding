@@ -233,7 +233,7 @@ class LCA(InferenceMethod):
         return coefficients.squeeze()
 
 
-class Vanilla(InferenceMethod):
+class Euler(InferenceMethod):
     def __init__(self, n_iter=100, coeff_lr=1e-3, sparsity_penalty=0.2,
                  stop_early=False, epsilon=1e-2, solver=None,
                  return_all_coefficients=False):

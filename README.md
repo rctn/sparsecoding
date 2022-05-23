@@ -6,7 +6,7 @@ Reference sparse coding implementations for efficient learning and inference imp
 
 ## Implemented Inference Methods
 * Locally Competative Algorithm (LCA)
-* Gradient Descent with Euler's method on Laplace Prior (Vanilla)
+* Gradient Descent with Euler's method on Laplace Prior (Euler)
 * Laplacian Scale Mixture (LSM)
 * Iterative Shrinkage-threshold Algorithm (ISTA)
 * Generic PyTorch minimization of arbitrary loss function (PyTorchOptimizer)
