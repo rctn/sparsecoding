@@ -13,7 +13,7 @@ def plot_dictionary(dictionary, color=False, nrow=30, normalize=True,
 
     Parameters
     ----------
-    dictionary : array-like, shape [n_features, n_basis]    
+    dictionary : array-like, shape [n_features, n_basis]
         Dictionary
     color : bool, default=False
         Set True if dictionary 3 channel (color)

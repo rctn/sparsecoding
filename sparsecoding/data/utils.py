@@ -1,5 +1,5 @@
 import os
-import torch 
+import torch
 import numpy as np
 import pickle as pkl
 
@@ -12,7 +12,7 @@ VH_DICT_PATH = os.path.join(DICTIONARY_PATH, "van_hateren", "VH-1.5x_overcomplet
 
 
 def load_dictionary_from_pickle(path):
-    dictionary_file = open(path,'rb')
+    dictionary_file = open(path, 'rb')
     numpy_dictionary = pkl.load(dictionary_file)
     dictionary_file.close()
     dictionary = torch.tensor(numpy_dictionary.astype(np.float32))
@@ -21,7 +21,7 @@ def load_dictionary_from_pickle(path):
 
 def load_bars_dictionary():
     path = BARS_DICT_PATH
-    dictionary_file = open(path,'rb')
+    dictionary_file = open(path, 'rb')
     numpy_dictionary = pkl.load(dictionary_file)
     dictionary_file.close()
     dictionary = torch.tensor(numpy_dictionary.astype(np.float32))
@@ -30,7 +30,7 @@ def load_bars_dictionary():
 
 def load_van_hateren_dictionary():
     path = VH_DICT_PATH
-    dictionary_file = open(path,'rb')
+    dictionary_file = open(path, 'rb')
     numpy_dictionary = pkl.load(dictionary_file)
     dictionary_file.close()
     dictionary = torch.tensor(numpy_dictionary.astype(np.float32))

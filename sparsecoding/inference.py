@@ -1,5 +1,4 @@
 import torch
-import numpy as np
 
 
 class InferenceMethod:
@@ -203,10 +202,10 @@ class LCA(InferenceMethod):
             if self.return_all_coefficients != "none":
                 if self.return_all_coefficients == "active":
                     coefficients = torch.concat([coefficients,
-                                                self.threshold_nonlinearity(u).clone().unsqueeze(1)], dim=1)
+                                                 self.threshold_nonlinearity(u).clone().unsqueeze(1)], dim=1)
                 else:
                     coefficients = torch.concat([coefficients,
-                                                u.clone().unsqueeze(1)], dim=1)
+                                                 u.clone().unsqueeze(1)], dim=1)
 
             # compute new
             a = self.threshold_nonlinearity(u)
@@ -225,11 +224,11 @@ class LCA(InferenceMethod):
         # return active units if return_all_coefficients in ["none","active"]
         if self.return_all_coefficients == "membrane":
             coefficients = torch.concat([coefficients,
-                                        u.clone().unsqueeze(1)], dim=1)
+                                         u.clone().unsqueeze(1)], dim=1)
         else:
             final_coefficients = self.threshold_nonlinearity(u)
             coefficients = torch.concat([coefficients,
-                                        final_coefficients.clone().unsqueeze(1)], dim=1)
+                                         final_coefficients.clone().unsqueeze(1)], dim=1)
 
         return coefficients.squeeze()
 
@@ -336,7 +335,7 @@ class Vanilla(InferenceMethod):
 
             if self.return_all_coefficients:
                 coefficients = torch.concat([coefficients,
-                                            a.clone().unsqueeze(1)], dim=1)
+                                             a.clone().unsqueeze(1)], dim=1)
 
             if self.stop_early:
                 old_a = a.clone().detach()
@@ -353,7 +352,7 @@ class Vanilla(InferenceMethod):
             if use_checknan:
                 self.checknan(a, "coefficients")
 
-        coefficients = torch.concat([coefficients, a.clone().unsqueeze(1)],dim=1)
+        coefficients = torch.concat([coefficients, a.clone().unsqueeze(1)], dim=1)
         return torch.squeeze(coefficients)
 
 
@@ -459,7 +458,7 @@ class ISTA(InferenceMethod):
 
             if self.return_all_coefficients:
                 coefficients = torch.concat([coefficients,
-                                            self.threshold_nonlinearity(u).clone().unsqueeze(1)], dim=1)
+                                             self.threshold_nonlinearity(u).clone().unsqueeze(1)], dim=1)
 
             u -= stepsize * torch.mm(residual, dictionary)
             self.coefficients = self.threshold_nonlinearity(u)
@@ -478,7 +477,7 @@ class ISTA(InferenceMethod):
                 self.checknan(u, "coefficients")
 
         coefficients = torch.concat([coefficients,
-                                    self.coefficients.clone().unsqueeze(1)], dim=1)
+                                     self.coefficients.clone().unsqueeze(1)], dim=1)
         return torch.squeeze(coefficients)
 
 
@@ -551,7 +550,8 @@ class LSM(InferenceMethod):
         """
 
         # Compute loss
-        mse_loss = (1/(2*(sigma**2)))*torch.pow(torch.norm(data - torch.mm(dictionary, coefficients.t()).t(), p=2, dim=1, keepdim=True), 2)
+        preds = torch.mm(dictionary, coefficients.t()).t()
+        mse_loss = (1/(2*(sigma**2))) * torch.pow(torch.norm(data - preds, p=2, dim=1, keepdim=True), 2)
         sparse_loss = torch.sum(lambdas.mul(
             torch.abs(coefficients)), 1, keepdim=True)
         loss = mse_loss + sparse_loss
@@ -611,7 +611,7 @@ class LSM(InferenceMethod):
                 # Backward pass: compute gradient of the loss with respect to
                 # model parameters
                 loss.backward(torch.ones((batch_size, 1),
-                              device=device), retain_graph=True)
+                                         device=device), retain_graph=True)
 
                 # Calling the step function on an Optimizer makes an update to
                 # it's parameters
