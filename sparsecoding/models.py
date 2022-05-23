@@ -73,7 +73,7 @@ class SparseCoding(torch.nn.Module):
 
     def normalize_dictionary(self):
         """Normalize columns of dictionary matrix to unit norm."""
-        self.dictionary = self.dictionary.div_(self.dictionary.norm(p=2,dim=0))
+        self.dictionary = self.dictionary.div_(self.dictionary.norm(p=2, dim=0))
         self.checknan()
 
     def learn_dictionary(self, dataset, n_epoch, batch_size):
@@ -239,7 +239,6 @@ class SimulSparseCoding(SparseCoding):
                                         shuffle=True)
                 iterloader = iter(dataloader)
                 batch = next(iterloader)
-
 
             # update coefficients
             residual = batch - (self.dictionary@a.t()).t()
