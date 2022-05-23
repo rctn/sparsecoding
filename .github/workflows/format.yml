@@ -20,6 +20,4 @@ jobs:
 
       - name: flake8-lint
         uses: py-actions/flake8@v2
-        with:
-          max-line-length: "120"
 
