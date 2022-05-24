@@ -1,66 +1,48 @@
-from tests.testing_utilities import TestCase
-from tests.data_generation import BarsDataset
-
 import torch
+import unittest
 
 from sparsecoding import inference
+from tests.testing_utilities import TestCase
+from tests.sparsecoding.inference.common import (
+    DATAS, DATASET_SIZE, DATASET, DICTIONARY, PATCH_SIZE
+)
 
 
 class TestLCA(TestCase):
-    '''Test Locally Competative Algorithm'''
+    def test_shape(self):
+        """
+        Test that LCA inference returns expected shapes.
+        """
+        N_ITER = 10
 
-    def test_coefficient_shapes(self):
-        assert False
+        for (data, dataset) in zip(DATAS, DATASET):
+            inference_method = inference.LCA(N_ITER)
+            a = inference_method.infer(data, DICTIONARY)
+            self.assertShapeEqual(a, dataset.weights)
 
-        def evaluate(device):
-            bars = BarsDataset(device=device)
-            a = inference_method.infer(bars.data, bars.dictionary)
-            self.assertShapeEqual(a, bars.coefficients)
+            for retval in ["active", "membrane"]:
+                inference_method = inference.LCA(N_ITER, return_all_coefficients=retval)
+                a = inference_method.infer(data, DICTIONARY)
+                self.assertEqual(a.shape, (DATASET_SIZE, N_ITER + 1, 2 * PATCH_SIZE))
 
-        def evalute_return_all_coefficients(device):
-            bars = BarsDataset(device=device)
-            a = inference_method.infer(bars.data, bars.dictionary)
-            self.assertEqual(a.shape, (bars.n_samples, inference_method.n_iter+1, bars.n_basis))
+    def test_inference(self):
+        """
+        Test that LCA inference recovers the correct weights.
+        """
+        LR = 5e-2
+        THRESHOLD = 0.1
+        N_ITER = 1000
 
-        # generic
-        inference_method = inference.LCA()
-        evaluate(torch.device('cpu'))
-        if torch.cuda.is_available():
-            evaluate(torch.device('cuda'))
+        for (data, dataset) in zip(DATAS, DATASET):
+            inference_method = inference.LCA(
+                coeff_lr=LR,
+                threshold=THRESHOLD,
+                n_iter=N_ITER,
+            )
 
-        # stop early condition
-        inference_method = inference.LCA(n_iter=10, stop_early=True)
-        evaluate(torch.device('cpu'))
-        if torch.cuda.is_available():
-            evaluate(torch.device('cuda'))
+            a = inference_method.infer(data, DICTIONARY)
 
-        # return_all_coefficients='membrane'
-        inference_method = inference.LCA(n_iter=10, return_all_coefficients='membrane')
-        evalute_return_all_coefficients(torch.device('cpu'))
-        if torch.cuda.is_available():
-            evalute_return_all_coefficients(torch.device('cuda'))
-
-        # return_all_coefficients='active'
-        inference_method = inference.LCA(n_iter=10, return_all_coefficients='active')
-        evalute_return_all_coefficients(torch.device('cpu'))
-        if torch.cuda.is_available():
-            evalute_return_all_coefficients(torch.device('cuda'))
-
-    def test_bars(self):
-        '''Evaluate quality of coefficient inference on bars dataset'''
-        inference_method = inference.LCA(coeff_lr=1e-2, threshold=0.1, n_iter=100)
-        cpudevice = torch.device('cpu')
-        rtol = 1e-2
-        atol = 1e-2
-
-        def evaluate(device):
-            bars = BarsDataset(device=device)
-            a = inference_method.infer(bars.data, bars.dictionary)
-            self.assertAllClose(a.to(cpudevice), bars.coefficients.to(cpudevice), rtol=rtol, atol=atol)
-
-        evaluate(torch.device('cpu'))
-        if torch.cuda.is_available():
-            evaluate(torch.device('cuda'))
+            self.assertAllClose(a, dataset.weights, atol=5e-2)
 
 if __name__ == "__main__":
     unittest.main()

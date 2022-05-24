@@ -1,57 +1,41 @@
-from tests.testing_utilities import TestCase
-from tests.data_generation import BarsDataset
-
 import torch
+import unittest
 
 from sparsecoding import inference
-
+from tests.testing_utilities import TestCase
+from tests.sparsecoding.inference.common import (
+    DATAS, DATASET_SIZE, DATASET, DICTIONARY, PATCH_SIZE
+)
 
 class TestVanilla(TestCase):
-    '''Test Vanilla inference algorithm'''
+    def test_shape(self):
+        """
+        Test that Vanilla inference returns expected shapes.
+        """
+        N_ITER = 10
 
-    def test_coefficient_shapes(self):
+        for (data, dataset) in zip(DATAS, DATASET):
+            inference_method = inference.Vanilla(N_ITER)
+            a = inference_method.infer(data, DICTIONARY)
+            self.assertShapeEqual(a, dataset.weights)
 
-        def evaluate(device):
-            bars = BarsDataset(device=device)
-            a = inference_method.infer(bars.data, bars.dictionary)
-            self.assertShapeEqual(a, bars.coefficients)
+            inference_method = inference.Vanilla(N_ITER, return_all_coefficients=True)
+            a = inference_method.infer(data, DICTIONARY)
+            self.assertEqual(a.shape, (DATASET_SIZE, N_ITER + 1, 2 * PATCH_SIZE))
 
-        def evalute_return_all_coefficients(device):
-            bars = BarsDataset(device=device)
-            a = inference_method.infer(bars.data, bars.dictionary)
-            self.assertEqual(a.shape, (bars.n_samples, inference_method.n_iter+1, bars.n_basis))
+    def test_inference(self):
+        """
+        Test that Vanilla inference recovers the correct weights.
+        """
+        LR = 5e-2
+        N_ITER = 1000
 
-        # generic
-        inference_method = inference.Vanilla(n_iter=10)
-        evaluate(torch.device('cpu'))
-        if torch.cuda.is_available():
-            evaluate(torch.device('cuda'))
+        for (data, dataset) in zip(DATAS, DATASET):
+            inference_method = inference.Vanilla(coeff_lr=LR, n_iter=N_ITER)
 
-        # stop early condition
-        inference_method = inference.Vanilla(n_iter=10, stop_early=True)
-        evaluate(torch.device('cpu'))
-        if torch.cuda.is_available():
-            evaluate(torch.device('cuda'))
+            a = inference_method.infer(data, DICTIONARY)
 
-        # return_all_coefficients=True
-        inference_method = inference.Vanilla(n_iter=10, return_all_coefficients=True)
-        evalute_return_all_coefficients(torch.device('cpu'))
-        if torch.cuda.is_available():
-            evalute_return_all_coefficients(torch.device('cuda'))
+            self.assertAllClose(a, dataset.weights, atol=5e-2)
 
-    def test_bars(self):
-        '''Evaluate quality of coefficient inference on bars dataset'''
-        inference_method = inference.Vanilla(coeff_lr=5e-3, n_iter=100)
-        cpudevice = torch.device('cpu')
-        # coefficients do not go identically to zero - very relaxed criteria
-        rtol = 1e-1
-        atol = 1e-1
-
-        def evaluate(device):
-            bars = BarsDataset(device=device)
-            a = inference_method.infer(bars.data, bars.dictionary)
-            self.assertAllClose(a.to(cpudevice), bars.coefficients.to(cpudevice), rtol=rtol, atol=atol)
-
-        evaluate(torch.device('cpu'))
-        if torch.cuda.is_available():
-            evaluate(torch.device('cuda'))
+if __name__ == "__main__":
+    unittest.main()

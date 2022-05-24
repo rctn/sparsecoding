@@ -1,43 +1,37 @@
-from tests.testing_utilities import TestCase
-from tests.data_generation import BarsDataset
-
 import torch
+import unittest
 
 from sparsecoding import inference
+from tests.testing_utilities import TestCase
+from tests.sparsecoding.inference.common import (
+    DATAS, DATASET_SIZE, DATASET, DICTIONARY, PATCH_SIZE
+)
 
 
 class TestLSM(TestCase):
-    '''Test Locally Competative Algorithm'''
+    def test_shape(self):
+        """
+        Test that LSM inference returns expected shapes.
+        """
+        N_ITER = 10
 
-    def test_coefficient_shapes(self):
+        for (data, dataset) in zip(DATAS, DATASET):
+            inference_method = inference.LSM(N_ITER)
+            a = inference_method.infer(data, DICTIONARY)
+            self.assertShapeEqual(a, dataset.weights)
 
-        def evaluate(device):
-            bars = BarsDataset(device=device)
-            a = inference_method.infer(bars.data, bars.dictionary)
-            self.assertShapeEqual(a, bars.coefficients)
+    def test_inference(self):
+        """
+        Test that LSM inference recovers the correct weights.
+        """
+        N_ITER = 1000
 
-        inference_method = inference.LSM(n_iter=10)
-        evaluate(torch.device('cpu'))
-        if torch.cuda.is_available():
-            evaluate(torch.device('cuda'))
+        for (data, dataset) in zip(DATAS, DATASET):
+            inference_method = inference.LSM(n_iter=N_ITER)
 
-        inference_method = inference.LSM(n_iter=10)
-        evaluate(torch.device('cpu'))
-        if torch.cuda.is_available():
-            evaluate(torch.device('cuda'))
+            a = inference_method.infer(data, DICTIONARY)
 
-    def test_bars(self):
-        '''Evaluate quality of coefficient inference on bars dataset'''
-        inference_method = inference.LSM(n_iter=100)
-        cpudevice = torch.device('cpu')
-        rtol = 1e-0
-        atol = 1e-0
+            self.assertAllClose(a, dataset.weights, atol=5e-2)
 
-        def evaluate(device):
-            bars = BarsDataset(device=device)
-            a = inference_method.infer(bars.data, bars.dictionary)
-            self.assertAllClose(a.to(cpudevice), bars.coefficients.to(cpudevice), rtol=rtol, atol=atol)
-
-        evaluate(torch.device('cpu'))
-        if torch.cuda.is_available():
-            evaluate(torch.device('cuda'))
+if __name__ == "__main__":
+    unittest.main()
