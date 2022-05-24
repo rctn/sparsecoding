@@ -3,7 +3,7 @@ import unittest
 
 from sparsecoding import inference
 from tests.testing_utilities import TestCase
-from tests.sparsecoding.inference.common import (
+from tests.inference.common import (
     DATAS, DATASET_SIZE, DATASET, DICTIONARY, PATCH_SIZE
 )
 
