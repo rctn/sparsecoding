@@ -1,4 +1,3 @@
-import torch
 import unittest
 
 from sparsecoding import inference
@@ -6,6 +5,7 @@ from tests.testing_utilities import TestCase
 from tests.sparsecoding.inference.common import (
     DATAS, DATASET_SIZE, DATASET, DICTIONARY, PATCH_SIZE
 )
+
 
 class TestVanilla(TestCase):
     def test_shape(self):
@@ -36,6 +36,7 @@ class TestVanilla(TestCase):
             a = inference_method.infer(data, DICTIONARY)
 
             self.assertAllClose(a, dataset.weights, atol=5e-2)
+
 
 if __name__ == "__main__":
     unittest.main()

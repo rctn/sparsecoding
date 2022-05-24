@@ -1,4 +1,3 @@
-import torch
 import unittest
 
 from sparsecoding import inference
@@ -36,6 +35,7 @@ class TestISTA(TestCase):
             a = inference_method.infer(data, DICTIONARY)
 
             self.assertAllClose(a, dataset.weights, atol=5e-2)
+
 
 if __name__ == "__main__":
     unittest.main()
