@@ -1,7 +1,7 @@
 import torch
 import unittest
 
-from sparsecoding.prior.l0 import L0Prior
+from sparsecoding.priors.l0 import L0Prior
 
 
 class TestL0Prior(unittest.TestCase):
