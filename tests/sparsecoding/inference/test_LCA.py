@@ -10,6 +10,7 @@ class TestLCA(TestCase):
     '''Test Locally Competative Algorithm'''
 
     def test_coefficient_shapes(self):
+        assert False
 
         def evaluate(device):
             bars = BarsDataset(device=device)
@@ -60,3 +61,6 @@ class TestLCA(TestCase):
         evaluate(torch.device('cpu'))
         if torch.cuda.is_available():
             evaluate(torch.device('cuda'))
+
+if __name__ == "__main__":
+    unittest.main()
