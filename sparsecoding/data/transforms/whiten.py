@@ -1,5 +1,6 @@
 import torch
 
+
 class Whitener(object):
     """Performs data whitening (and un-whitening).
 
@@ -14,6 +15,7 @@ class Whitener(object):
             N is the number of data points,
             D is the dimension of the data points.
     """
+
     def __init__(
         self,
         data,
@@ -34,7 +36,7 @@ class Whitener(object):
     ):
         """
         Whitens the input `data` to have zero mean and unit (identity) covariance.
-        
+
         Uses statistics of the data from class initialization.
 
         Note that this is a linear transformation; we use ZCA whitening.
@@ -84,7 +86,7 @@ class Whitener(object):
     ):
         """
         Un-whitens the input `whitened_data`.
-        
+
         Uses statistics of the data from class initialization.
 
         This is the inverse of `whiten()`.

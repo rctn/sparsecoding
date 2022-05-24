@@ -53,5 +53,6 @@ class TestPatcher(unittest.TestCase):
             patchwise_delta = torch.sum(delta, dim=1)  # [-1]
             assert torch.min(patchwise_delta) == 0.
 
+
 if __name__ == "__main__":
     unittest.main()

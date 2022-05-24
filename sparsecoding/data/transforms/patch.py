@@ -61,6 +61,7 @@ def sample_random_patches(
 
     return torch.permute(patches, (0, 3, 1, 2))
 
+
 def patchify(
     patch_size: int,
     image: torch.Tensor,
@@ -117,6 +118,7 @@ def patchify(
     assert patches.shape[1] == N
 
     return patches.reshape(*leading_dims, N, C, P, P)
+
 
 def quilt(
     height: int,
