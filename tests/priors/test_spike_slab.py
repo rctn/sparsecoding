@@ -5,7 +5,7 @@ from sparsecoding.priors.spike_slab import SpikeSlabPrior
 
 
 class TestSpikeSlabPrior(unittest.TestCase):
-    def test_spike_slab_prior(self):
+    def test_sample(self):
         N = 10000
         D = 4
         p_spike = 0.5
@@ -52,6 +52,43 @@ class TestSpikeSlabPrior(unittest.TestCase):
                     torch.sum(laplace_weights < cutoff) / N_slab,
                     quantile,
                     atol=1e-2,
+                )
+
+    def test_log_prob(self):
+        D = 3
+        p_spike = 0.5
+        scale = 1.
+
+        for positive_only in [True, False]:
+            spike_slab_prior = SpikeSlabPrior(
+                D,
+                p_spike,
+                scale,
+                positive_only,
+            )
+
+            samples = torch.Tensor([[-1., 0., 1.]])
+
+            if positive_only:
+                assert spike_slab_prior.log_prob(samples)[0] == -torch.inf
+
+                samples = torch.abs(samples)
+                assert torch.allclose(
+                    spike_slab_prior.log_prob(samples)[0],
+                    (
+                        -1. + torch.log(torch.tensor(1. - p_spike))
+                        + torch.log(torch.tensor(p_spike))
+                        - 1. + torch.log(torch.tensor(1. - p_spike))
+                    )
+                )
+            else:
+                assert torch.allclose(
+                    spike_slab_prior.log_prob(samples)[0],
+                    (
+                        -1. + torch.log(torch.tensor(1. - p_spike)) - torch.log(torch.tensor(2.))
+                        + torch.log(torch.tensor(p_spike))
+                        - 1. + torch.log(torch.tensor(1. - p_spike)) - torch.log(torch.tensor(2.))
+                    )
                 )
 
 
