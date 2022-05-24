@@ -1,7 +1,7 @@
 import torch
 from torch.distributions.laplace import Laplace
 
-from sparsecoding.prior.common import Prior
+from sparsecoding.priors.common import Prior
 
 
 class SpikeSlabPrior(Prior):

@@ -1,6 +1,6 @@
 import torch
 
-from sparsecoding.prior.common import Prior
+from sparsecoding.priors.common import Prior
 
 
 class L0Prior(Prior):

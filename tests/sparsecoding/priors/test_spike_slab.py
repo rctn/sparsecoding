@@ -1,7 +1,7 @@
 import torch
 import unittest
 
-from sparsecoding.prior.spike_slab import SpikeSlabPrior
+from sparsecoding.priors.spike_slab import SpikeSlabPrior
 
 
 class TestSpikeSlabPrior(unittest.TestCase):
