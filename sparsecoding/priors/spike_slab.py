@@ -70,3 +70,38 @@ class SpikeSlabPrior(Prior):
         )
 
         return weights
+
+    def log_prob(
+        self,
+        sample: torch.Tensor,
+    ):
+        super().check_sample_input(sample)
+
+        N = sample.shape[0]
+
+        log_prob = torch.zeros((N, self.D), dtype=torch.float32)
+
+        spike_mask = sample == 0.
+        slab_mask = sample != 0.
+
+        # Add log-probability for spike.
+        log_prob[spike_mask] = torch.log(torch.tensor(self.p_spike))
+
+        # Add log-probability for slab.
+        if self.positive_only:
+            log_prob[slab_mask] = (
+                torch.log(torch.tensor(1. - self.p_spike))
+                - torch.log(torch.tensor(self.scale))
+                - sample[slab_mask] / self.scale
+            )
+            log_prob[sample < 0.] = -torch.inf
+        else:
+            log_prob[slab_mask] = (
+                torch.log(torch.tensor(1. - self.p_spike))
+                - torch.log(torch.tensor(2. * self.scale))
+                - torch.abs(sample[slab_mask]) / self.scale
+            )
+
+        log_prob = torch.sum(log_prob, dim=1)  # [N]
+
+        return log_prob

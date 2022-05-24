@@ -63,3 +63,14 @@ class L0Prior(Prior):
         weights[active_weight_idxs] += 1.
 
         return weights
+
+    def log_prob(
+        self,
+        sample: torch.Tensor,
+    ):
+        super().check_sample_input(sample)
+
+        l0_norm = torch.sum(sample != 0., dim=1).type(torch.long)  # [num_samples]
+        log_prob = torch.log(self.prob_distr[l0_norm - 1])
+        log_prob[l0_norm == 0] = -torch.inf
+        return log_prob
