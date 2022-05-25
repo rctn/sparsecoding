@@ -22,4 +22,4 @@ Reference sparse coding implementations for efficient learning and inference imp
 Note: If you are using a jupyter notebook, you will need to restart the jupyter kernel each time you change a source file.
 
 # Contributing
-See the [contributing](https://github.com/rctn/sparsecoding/blob/main/docs/contributing.md) document!
+See the [contributing](docs/contributing.md) document!
