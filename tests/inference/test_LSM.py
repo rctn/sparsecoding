@@ -28,7 +28,7 @@ class TestLSM(TestCase):
 
             a = inference_method.infer(data, DICTIONARY)
 
-            self.assertAllClose(a, dataset.weights, atol=5e-2)
+            self.assertAllClose(a, dataset.weights, atol=7.5e-2)
 
 
 if __name__ == "__main__":

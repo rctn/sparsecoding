@@ -1,6 +1,7 @@
 import torch
 
 from sparsecoding.priors.l0 import L0Prior
+from sparsecoding.priors.lsm import LSMPrior
 from sparsecoding.priors.spike_slab import SpikeSlabPrior
 from sparsecoding.data.datasets.bars import BarsDataset
 
@@ -23,6 +24,12 @@ PRIORS = [
                 num_classes=2 * PATCH_SIZE,
             ).type(torch.float32)
         ),
+    ),
+    LSMPrior(
+        dim=2 * PATCH_SIZE,
+        alpha=80.0,
+        beta=0.02,
+        positive_only=False,
     ),
 ]
 
