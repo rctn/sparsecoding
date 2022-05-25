@@ -5,7 +5,7 @@ from sparsecoding.priors.common import Prior
 
 class L0Prior(Prior):
     """Prior with a distribution over the l0-norm of the weights.
-    
+
     A class of priors where the weights are binary;
     the distribution is over the l0-norm of the weight vector
     (how many weights are active).
@@ -15,6 +15,7 @@ class L0Prior(Prior):
     prob_distr : Tensor, shape [D], dtype float32
         Probability distribution over the l0-norm of the weights.
     """
+
     def __init__(
         self,
         prob_distr: torch.Tensor,
@@ -42,7 +43,7 @@ class L0Prior(Prior):
             input=self.prob_distr,
             num_samples=num_samples,
             replacement=True,
-        ) # [N]
+        )  # [N]
 
         d_idxs = torch.arange(self.D)
         active_idx_mask = (

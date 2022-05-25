@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch.utils.data import Dataset
 
@@ -7,7 +6,7 @@ from sparsecoding.priors.common import Prior
 
 class BarsDataset(Dataset):
     """Toy dataset where the dictionary elements are horizontal and vertical bars.
-    
+
     Dataset elements are formed by taking linear combinations of the dictionary elements,
     where the weights are sampled according to the input Prior.
 
@@ -29,6 +28,7 @@ class BarsDataset(Dataset):
     data : Tensor, shape [dataset_size, patch_size, patch_size]
         Weighted linear combinations of the basis elements.
     """
+
     def __init__(
         self,
         patch_size: int,
@@ -43,7 +43,7 @@ class BarsDataset(Dataset):
 
         h_bars = one_hots.reshape(self.P, self.P, 1)
         v_bars = one_hots.reshape(self.P, 1, self.P)
-        
+
         h_bars = h_bars.expand(self.P, self.P, self.P)
         v_bars = v_bars.expand(self.P, self.P, self.P)
         self.basis = torch.cat((h_bars, v_bars), dim=0)  # [2*P, P, P]

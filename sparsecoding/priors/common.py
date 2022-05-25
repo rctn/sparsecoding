@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class Prior(ABC):
     """A distribution over weights.
 

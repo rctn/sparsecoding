@@ -67,5 +67,6 @@ class TestPyTorchOptimizer(TestCase):
 
             self.assertAllClose(a, dataset.weights, atol=1e-1, rtol=1e-1)
 
+
 if __name__ == "__main__":
     unittest.main()

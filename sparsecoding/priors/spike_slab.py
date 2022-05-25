@@ -6,7 +6,7 @@ from sparsecoding.priors.common import Prior
 
 class SpikeSlabPrior(Prior):
     """Prior where weights are drawn from a "spike-and-slab" distribution.
-    
+
     The "spike" is at 0 and the "slab" is Laplacian.
 
     See:
@@ -25,6 +25,7 @@ class SpikeSlabPrior(Prior):
         Ensure that the weights are positive by taking the absolute value
         of weights sampled from the Laplacian.
     """
+
     def __init__(
         self,
         dim: int,
