@@ -5,7 +5,7 @@ from sparsecoding.priors.common import Prior
 
 
 class SpikeSlabPrior(Prior):
-    """Prior where weights are drawn from a "spike-and-slab" distribution.
+    """Prior where weights are drawn i.i.d. from a "spike-and-slab" distribution.
 
     The "spike" is at 0 and the "slab" is Laplacian.
 
@@ -88,19 +88,15 @@ class SpikeSlabPrior(Prior):
         log_prob[spike_mask] = torch.log(torch.tensor(self.p_spike))
 
         # Add log-probability for slab.
+        log_prob[slab_mask] = (
+            torch.log(torch.tensor(1. - self.p_spike))
+            - torch.log(torch.tensor(self.scale))
+            - sample[slab_mask] / self.scale
+        )
         if self.positive_only:
-            log_prob[slab_mask] = (
-                torch.log(torch.tensor(1. - self.p_spike))
-                - torch.log(torch.tensor(self.scale))
-                - sample[slab_mask] / self.scale
-            )
             log_prob[sample < 0.] = -torch.inf
         else:
-            log_prob[slab_mask] = (
-                torch.log(torch.tensor(1. - self.p_spike))
-                - torch.log(torch.tensor(2. * self.scale))
-                - torch.abs(sample[slab_mask]) / self.scale
-            )
+            log_prob[slab_mask] -= torch.log(torch.tensor(2.))
 
         log_prob = torch.sum(log_prob, dim=1)  # [N]
 
