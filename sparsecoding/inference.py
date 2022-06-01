@@ -551,9 +551,8 @@ class LSM(InferenceMethod):
 
         # Compute loss
         preds = torch.mm(dictionary, coefficients.t()).t()
-        mse_loss = (1/(2*(sigma**2))) * torch.pow(torch.norm(data - preds, p=2, dim=1, keepdim=True), 2)
-        sparse_loss = torch.sum(lambdas.mul(
-            torch.abs(coefficients)), 1, keepdim=True)
+        mse_loss = (1/(2*(sigma**2))) * torch.sum(torch.square(data - preds), dim=1, keepdim=True)
+        sparse_loss = torch.sum(lambdas * torch.abs(coefficients), dim=1, keepdim=True)
         loss = mse_loss + sparse_loss
         return loss
 
@@ -578,44 +577,46 @@ class LSM(InferenceMethod):
         device = dictionary.device
 
         # Initialize coefficients for the whole batch
-        coefficients = torch.zeros(
-            batch_size, n_basis, requires_grad=False, device=device)
+        coefficients = torch.zeros(batch_size, n_basis, device=device, requires_grad=True)
 
-        for i in range(0, self.n_iter_LSM):
+        # Set up optimizer
+        optimizer = torch.optim.Adam([coefficients], lr=1e-1)
 
+        # Outer loop, set sparsity penalties (lambdas).
+        for i in range(self.n_iter_LSM):
             # Compute the initial values of lambdas
-            lambdas = (self.alpha + 1)/(self.beta +
-                                        torch.abs(coefficients)).to(device)
+            lambdas = (
+                (self.alpha + 1)
+                / (self.beta + torch.abs(coefficients.detach()))
+            )
 
-            # Set coefficients to zero before doing repeating the inference
-            # with new lambdas
-            coefficients = torch.zeros(
-                batch_size, n_basis, requires_grad=True, device=device)
-
-            # Set up optimizer
-            optimizer = torch.optim.Adam([coefficients])
-
-            # Internal loop to infer the coefficients with the current lambdas
-            for t in range(0, self.n_iter):
-
+            # Inner loop, optimize coefficients w/ current sparsity penalties.
+            # Exits early if converged before `n_iter`s.
+            last_loss = None
+            for t in range(self.n_iter):
                 # compute LSM loss for the current iteration
-                loss = self.lsm_Loss(data=data,
-                                     dictionary=dictionary,
-                                     coefficients=coefficients,
-                                     lambdas=lambdas,
-                                     sigma=self.sigma
-                                     )
+                loss = self.lsm_Loss(
+                    data=data,
+                    dictionary=dictionary,
+                    coefficients=coefficients,
+                    lambdas=lambdas,
+                    sigma=self.sigma,
+                )
+                loss = torch.sum(loss)
 
+                # Backward pass: compute gradient and update model parameters.
                 optimizer.zero_grad()
-
-                # Backward pass: compute gradient of the loss with respect to
-                # model parameters
-                loss.backward(torch.ones((batch_size, 1),
-                                         device=device), retain_graph=True)
-
-                # Calling the step function on an Optimizer makes an update to
-                # it's parameters
+                loss.backward()
                 optimizer.step()
+
+                # Break if coefficients have converged.
+                if (
+                    last_loss is not None
+                    and loss > 1.05 * last_loss
+                ):
+                    break
+
+                last_loss = loss
 
         # Sparsify the final solution by discarding the small coefficients
         coefficients.data[torch.abs(coefficients.data)
