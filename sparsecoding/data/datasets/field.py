@@ -4,8 +4,7 @@ from scipy.io import loadmat
 import torch
 from torch.utils.data import Dataset
 
-from sparsecoding.data.datasets.common import RAW_DATA_DIR
-from sparsecoding.data.transform.patch import patchify
+from sparsecoding.data.transforms.patch import patchify
 
 
 class FieldDataset(Dataset):
@@ -42,7 +41,7 @@ class FieldDataset(Dataset):
             os.system("wget https://rctn.org/bruno/sparsenet/IMAGES.mat")
             os.system(f"mv IMAGES.mat {root}/field.mat")
 
-        self.images = torch.tensor(loadmat(f"{RAW_DATA_DIR}/field.mat")["IMAGES"])  # [H, W, B]
+        self.images = torch.tensor(loadmat(f"{root}/field.mat")["IMAGES"])  # [H, W, B]
         assert self.images.shape == (self.H, self.W, self.B)
 
         self.images = torch.permute(self.images, (2, 0, 1))  # [B, H, W]
