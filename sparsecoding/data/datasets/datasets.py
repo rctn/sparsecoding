@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 # ================================================================================
 #  NATURAL IMAGES
 # ================================================================================
-class naturalscenes(Dataset):
+class Olshausen(Dataset):
 
     def __init__(self, img_dir, patch_size, patch_overlap, data_key='IMAGESr', device=None):
         """
@@ -73,61 +73,3 @@ class naturalscenes(Dataset):
                     self.patches.append(self.images[rl:rr, cl:cr, img])
         self.patches = np.asarray(self.patches, dtype=np.float32).reshape(-1, self.patch_size**2)
         self.patches = torch.from_numpy(self.patches).to(self.device)
-
-
-def whiten(data):
-    """
-    Whiten data via eigen decomposition
-    ---
-    parameters:
-    img - scalar (N,n)
-        input data where N is the number of points and n is features
-    ---
-    returns:
-    wdata - scalar (N,n)
-        whitened data
-    """
-
-    cdata = data.T-data.mean()
-
-    cov = np.cov(cdata)
-    w, v = np.linalg.eig(cov)
-    diagw = np.diag(np.real(1/(w**0.5)))
-
-    wdata = v@diagw@v.T@cdata
-    return wdata.T.astype(np.float32)
-
-
-def whiten_dataset(dataset, plot=False, title='', n_comp=-1):
-    from torchsmodel import sparsecoding
-    from utils import plotmontage
-
-    # zero mean
-    cpatches = (torchtonp(dataset.patches)-torchtonp(dataset.patches).mean(axis=0)).T
-    # covariance
-    cov = np.cov(cpatches)
-    # eigendecomp.
-    w, v = np.linalg.eig(cov)
-    diagw = np.diag(np.real(1/(w**0.5)))
-
-    # plot componenets
-    if plot:
-        model = sparsecoding(n_basis=(3*dataset.patch_size)**2,
-                             n=(3*dataset.patch_size)**2)
-
-        model.D = torch.from_numpy(v).to(torch.device("cpu"))
-        plotmontage(model, color=True, size=10, title=title)
-
-    # whiten
-    trotpatch = (nptotorch(v, device=dataset.device).t()@dataset.patches.t()).t()
-    twpatch = nptotorch(np.zeros(trotpatch.shape), device=dataset.device)
-    twpatch[:, :n_comp] = trotpatch[:, :n_comp]
-    dataset.patches = (nptotorch(v, device=dataset.device)@nptotorch(diagw, device=dataset.device)@twpatch.t()).t()
-
-
-def nptotorch(x, device=torch.device('cpu'), dtype=np.float32):
-    return torch.from_numpy(x.astype(dtype)).to(device)
-
-
-def torchtonp(x):
-    return x.cpu().detach().numpy()
