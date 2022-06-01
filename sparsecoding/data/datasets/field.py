@@ -8,7 +8,7 @@ from sparsecoding.data.datasets.common import RAW_DATA_DIR
 from sparsecoding.data.transform.patch import patchify
 
 
-class OlshausenDataset(Dataset):
+class FieldDataset(Dataset):
     """Dataset used in Olshausen & Field (1996).
 
     Paper:
