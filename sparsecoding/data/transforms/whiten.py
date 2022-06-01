@@ -14,6 +14,17 @@ class Whitener(object):
         where:
             N is the number of data points,
             D is the dimension of the data points.
+
+    Attributes
+    ----------
+    mean : Tensor, shape [D]
+        Mean of the input data for the Whitener.
+    covariance : Tensor, shape [D, D]
+        Co-variance of the input data for the Whitener.
+    eigenvalues : Tensor, shape [D]
+        Eigenvalues of `self.covariance`.
+    eigenvectors : Tensor, shape [D, D]
+        Eigenvectors of `self.covariance`.
     """
 
     def __init__(
@@ -27,15 +38,14 @@ class Whitener(object):
 
             self.mean = torch.mean(data, dim=1)  # [D]
 
-            covariance = torch.cov(data)  # [D, D]
-            self.eigenvalues, self.eigenvectors = torch.linalg.eigh(covariance)  # [D], [D, D]
+            self.covariance = torch.cov(data)  # [D, D]
+            self.eigenvalues, self.eigenvectors = torch.linalg.eigh(self.covariance)  # [D], [D, D]
 
     def whiten(
         self,
         data: torch.Tensor,
     ):
-        """
-        Whitens the input `data` to have zero mean and unit (identity) covariance.
+        """Whitens the input `data` to have zero mean and unit (identity) covariance.
 
         Uses statistics of the data from class initialization.
 
