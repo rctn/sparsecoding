@@ -91,7 +91,7 @@ class SpikeSlabPrior(Prior):
         log_prob[slab_mask] = (
             torch.log(torch.tensor(1. - self.p_spike))
             - torch.log(torch.tensor(self.scale))
-            - sample[slab_mask] / self.scale
+            - torch.abs(sample[slab_mask]) / self.scale
         )
         if self.positive_only:
             log_prob[sample < 0.] = -torch.inf
