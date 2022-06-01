@@ -11,7 +11,7 @@ from torchvision.utils import make_grid
 SMOOTH_INTERVALS = 100
 
 
-def visualize_patches(patches, title=""):
+def show_patches(patches, title=""):
     """Given patches of images, create a grid and display it.
 
     patches is a Tensor with shape (batch_size, pixels_per_patch).
@@ -24,7 +24,7 @@ def visualize_patches(patches, title=""):
     display(out, bar=False, title=title)
 
 
-def visualize_patches_sbs(orig, recon, title="", dpi=200):
+def show_patches_sbs(orig, recon, title="", dpi=200):
     """Given original and reconstructed patches, display grids side by side.
 
     orig and recon are Tensors each with shape (batch_size, pixels_per_patch).
@@ -43,7 +43,7 @@ def visualize_patches_sbs(orig, recon, title="", dpi=200):
     display_sbs(orig_out, recon_out, bar=False, title=title, dpi=dpi)
 
 
-def visualize_dict(dict, title):
+def show_dict(dict, title):
     """Given basis vectors, create a grid and display it.
 
     dict is Tensor of (size_of_basis, num_bases).
@@ -54,8 +54,8 @@ def visualize_dict(dict, title):
     display(out, bar=False, title=title)
 
 
-def visualize_imgs(imgs, dpi=200):
-    """Visualize whitened images in a perceptually-friendly way.
+def show_imgs(imgs, dpi=200):
+    """Show whitened images in a perceptually-friendly way.
 
     imgs is Tensor of shape (num_imgs, height, width).
     """
@@ -224,30 +224,48 @@ def plot_coeffs(coeffs, title="patch_coefficients"):
         labelbottom=False)
     plt.show()
 
+# def coeff_grid(coeffs):
+#     """Plots stem for coefficients of half a batch, arranges them into a grid.
+
+#     coeffs is Tensor of shape (batch_size, number_of_bases).
+#     """
+#     batch_size = coeffs.shape[0]
+#     fig = plt.gcf()
+
+#     # Show coefficients of half of the images in the batch.
+#     for i in range(batch_size//2):
+#         plt.subplot(batch_size//5, 5, i+1)
+#         plt.stem(coeffs[i], use_line_collection=True)
+#         plt.title("patch {}".format(i))
+#         plt.tick_params(
+#             axis='x',
+#             which='both',
+#             bottom=False,
+#             labelbottom=False)
+#     fig.set_size_inches(30, 70)
+#     plt.show()
+
 
 def coeff_grid(coeffs):
-    """Plots stem for all coefficients, arranges them into a grid.
+    """Plots stem for coefficients of half a batch, arranges them into a grid.
 
     coeffs is Tensor of shape (batch_size, number_of_bases).
     """
     batch_size = coeffs.shape[0]
-    fig = plt.gcf()
+    num_to_plot = batch_size//2
+    num_cols = 4
 
-    # Show half of the coefficients.
-    for i in range(batch_size//2):
-        plt.subplot(batch_size//5, 5, i+1)
-        plt.stem(coeffs[i], use_line_collection=True)
-        plt.title("patch {}".format(i))
-        plt.tick_params(
-            axis='x',
-            which='both',
-            bottom=False,
-            labelbottom=False)
-    fig.set_size_inches(30, 70)
+    fig = plt.figure()
+    gs = fig.add_gridspec(num_to_plot//num_cols, num_cols, hspace=0, wspace=0)
+    subplots = gs.subplots(sharex="col", sharey=True).flatten()
+    for i, subplot in enumerate(subplots[:num_to_plot]):
+        subplot.stem(coeffs[i], use_line_collection=True)
+
+    fig.set_size_inches(30, 50)
     plt.show()
 
 
-def show_components(phi, a):
+def show_components(phi, a, dpi):
     """Display weighted components sorted by coefficient size.
 
     phi is entire dictionary. a is coefficients of one patch.
@@ -270,5 +288,5 @@ def show_components(phi, a):
     plt.imshow(components, cmap="gray", vmin=vmin, vmax=vmax)
     plt.title("weighted components")
     fig = plt.gcf()
-    fig.set_dpi(100)
+    fig.set_dpi(dpi)
     plt.show()
