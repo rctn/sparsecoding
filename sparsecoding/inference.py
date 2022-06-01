@@ -715,7 +715,7 @@ class IHT(InferenceMethod):
         Parameters
         ----------
         sparsity : scalar (1,)
-            sparsity of the solution        
+            Sparsity of the solution. The number of active coefficients will be set to ceil(sparsity * data_dim) at the end of each iterative update.        
         n_iter : scalar (1,) default=100
             number of iterations to run for an inference method
         return_all_coefficients : string (1,) default=False
@@ -759,29 +759,23 @@ class IHT(InferenceMethod):
         coefficients = torch.zeros(
             batch_size, n_basis, requires_grad=False, device=device)
 
-        # For each sample in the batch
-        for i in range(0, batch_size):
-            # Pick ith sample 
-            y = torch.clone(data[i:i+1,:])
-            
-            # Initialize coefficients for ith sample 
-            coeff = torch.zeros(
-                1, n_basis, requires_grad=False, device=device)
-            
-            
-            for t in range(0, self.n_iter):    
-                
-                # Update coefficients 
-                temp = coeff + torch.mm((y-torch.mm(dictionary, coeff.t()).t()),dictionary)
 
-                # Apply kWTA nonlinearity
-                sort, indices = torch.sort(torch.abs(temp), dim=1, descending=True)
-                coeff = torch.zeros(1, n_basis, device=device)
-                coeff[0,indices[0,0:K]]=temp[0,indices[0,0:K]]   
-                
-                
-            coefficients[i,:] = coeff
-
+        for _ in range(self.n_iter):
+            # Compute the prediction given the current coefficients
+            preds = coefficients @ dictionary.T  # [batch_size, n_features]
+            
+            # Compute the residual
+            delta = data - preds  # [batch_size, n_features]
+            
+            # Compute the similarity between the residual and the atoms in the dictionary 
+            update = delta @ dictionary  # [batch_size, n_basis]
+            coefficients = coefficients + update  # [batch_size, n_basis]
+            
+            # Apply kWTA nonlinearity            
+            topK_values, indices = torch.topk(torch.abs(coefficients), K, dim=1)  
+            
+            # Reconstruct coefficients using the output of torch.topk
+            coefficients = torch.sign(coefficients) * torch.zeros(batch_size, n_basis, device=device).scatter_(1, indices, topK_values) # [batch_size, n_basis]
 
         return coefficients.detach()
 
