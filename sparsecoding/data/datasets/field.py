@@ -18,6 +18,8 @@ class FieldDataset(Dataset):
 
     Parameters
     ----------
+    root : str
+        Location to download the dataset to.
     patch_size : int
         Side length of patches for sparse dictionary learning.
     """
@@ -29,16 +31,18 @@ class FieldDataset(Dataset):
 
     def __init__(
         self,
+        root: str,
         patch_size: int = 8,
     ):
         self.P = patch_size
 
-        os.system(f"mkdir -p {RAW_DATA_DIR}")
-        if not os.path.exists(f"{RAW_DATA_DIR}/olshausen.mat"):
+        root = os.path.expanduser(root)
+        os.system(f"mkdir -p {root}")
+        if not os.path.exists(f"{root}/field.mat"):
             os.system("wget https://rctn.org/bruno/sparsenet/IMAGES.mat")
-            os.system(f"mv IMAGES.mat {RAW_DATA_DIR}/olshausen.mat")
+            os.system(f"mv IMAGES.mat {root}/field.mat")
 
-        self.images = torch.tensor(loadmat(f"{RAW_DATA_DIR}/olshausen.mat")["IMAGES"])  # [H, W, B]
+        self.images = torch.tensor(loadmat(f"{RAW_DATA_DIR}/field.mat")["IMAGES"])  # [H, W, B]
         assert self.images.shape == (self.H, self.W, self.B)
 
         self.images = torch.permute(self.images, (2, 0, 1))  # [B, H, W]
