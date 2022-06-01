@@ -1,6 +1,7 @@
 import torch
 
 from sparsecoding.priors.l0 import L0Prior
+from sparsecoding.priors.laplace import LaplacePrior
 from sparsecoding.priors.lsm import LSMPrior
 from sparsecoding.priors.spike_slab import SpikeSlabPrior
 from sparsecoding.data.datasets.bars import BarsDataset
@@ -14,8 +15,11 @@ PRIORS = [
     SpikeSlabPrior(
         dim=2 * PATCH_SIZE,
         p_spike=0.8,
-        scale=1.0,
-        positive_only=True,
+        slab=LaplacePrior(
+            dim=1,
+            scale=1.0,
+            positive_only=True,
+        ),
     ),
     L0Prior(
         prob_distr=(
