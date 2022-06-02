@@ -347,7 +347,7 @@ class Hierarchical(torch.nn.Module):
             EXCEPT for the bottom layer, where the weights are
             implicitly defined as the difference between the data and the
             generated predictions from the previous layers.
-        
+
         Returns
         -------
         log_prob : Tensor, shape [N]
@@ -392,7 +392,7 @@ class Hierarchical(torch.nn.Module):
         learning_rate: float = 0.1,
     ):
         """Infer weights for the input `data` to maximize the log-likelihood.
-        
+
         Performs gradient descent with Adam.
 
         Parameters
@@ -403,7 +403,7 @@ class Hierarchical(torch.nn.Module):
             Number of iterations of gradient descent to perform.
         learning_rate : float
             Learning rate for the optimizer.
-        
+
         Returns
         -------
         weights : List[Tensor], length L, shape [N, D_i]
@@ -442,8 +442,8 @@ class Hierarchical(torch.nn.Module):
         inference_n_iter: int = 1000,
         inference_learning_rate: float = 0.1,
     ):
-        """Update the bases to maximize the log-likelihood of `data`. 
-        
+        """Update the bases to maximize the log-likelihood of `data`.
+
         In each iteration, we first infer the weights under the current basis functions,
         and then we update the bases with those weights fixed.
 
@@ -455,7 +455,7 @@ class Hierarchical(torch.nn.Module):
             Data to be generated.
         n_iter : int
             Number of iterations of gradient descent to perform.
-        
+
         Returns
         -------
         weights : List[Tensor], length L, shape [N, D_i]
