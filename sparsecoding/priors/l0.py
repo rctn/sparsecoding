@@ -24,7 +24,7 @@ class L0Prior(Prior):
             raise ValueError(f"`prob_distr` shape must be (D,), got {prob_distr.shape}.")
         if prob_distr.dtype != torch.float32:
             raise ValueError(f"`prob_distr` dtype must be torch.float32, got {prob_distr.dtype}.")
-        if not torch.allclose(torch.sum(prob_distr), torch.ones_like(prob_distr)):
+        if not torch.allclose(torch.sum(prob_distr), torch.ones(1, dtype=torch.float32)):
             raise ValueError(f"`torch.sum(prob_distr)` must be 1., got {torch.sum(prob_distr)}.")
 
         self.prob_distr = prob_distr
@@ -35,7 +35,7 @@ class L0Prior(Prior):
 
     def sample(
         self,
-        num_samples: int
+        num_samples: int,
     ):
         N = num_samples
 
@@ -63,3 +63,18 @@ class L0Prior(Prior):
         weights[active_weight_idxs] += 1.
 
         return weights
+
+    def log_prob(
+        self,
+        sample: torch.Tensor,
+    ):
+        super().check_sample_input(sample)
+
+        l0_norm = torch.sum(sample != 0., dim=1).type(torch.long)  # [num_samples]
+        log_prob = torch.log(self.prob_distr[l0_norm - 1])
+        log_prob[l0_norm == 0] = -torch.inf
+        return log_prob
+
+# TODO: Add L0ExpPrior, where the number of active units is distributed exponentially.
+
+# TODO: Add L0IidPrior, where the magnitude of an active unit is distributed according to an i.i.d. Prior.

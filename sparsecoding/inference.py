@@ -438,8 +438,8 @@ class ISTA(InferenceMethod):
 
         # Calculate stepsize based on largest eigenvalue of
         # dictionary.T @ dictionary.
-        lipschitz_constant = torch.symeig(
-            torch.mm(dictionary.T, dictionary))[0][-1]
+        lipschitz_constant = torch.linalg.eigvalsh(
+            torch.mm(dictionary.T, dictionary))[-1]
         stepsize = 1. / lipschitz_constant
         self.threshold = stepsize * self.sparsity_penalty
 
