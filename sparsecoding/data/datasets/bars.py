@@ -52,7 +52,7 @@ class BarsDataset(Dataset):
         h_bars = h_bars.expand(self.P, self.P, self.P)
         v_bars = v_bars.expand(self.P, self.P, self.P)
         self.basis = torch.cat((h_bars, v_bars), dim=0)  # [2*P, P, P]
-        self.basis /= np.sqrt(self.P)  # Normalize basis.
+        # self.basis /= np.sqrt(self.P)  # Normalize basis.
 
         self.weights = prior.sample(self.N)  # [N, 2*P]
 
