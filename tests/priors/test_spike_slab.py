@@ -59,6 +59,15 @@ class TestSpikeSlabPrior(unittest.TestCase):
         p_spike = 0.5
         scale = 1.
 
+        samples = torch.Tensor([[-1., 0., 1.]])
+
+        pos_only_log_prob = (
+            torch.log(torch.tensor(p_spike))
+            + 2 * (
+                -1. + torch.log(torch.tensor(1. - p_spike))
+            )
+        )
+
         for positive_only in [True, False]:
             spike_slab_prior = SpikeSlabPrior(
                 D,
@@ -67,28 +76,18 @@ class TestSpikeSlabPrior(unittest.TestCase):
                 positive_only,
             )
 
-            samples = torch.Tensor([[-1., 0., 1.]])
-
             if positive_only:
                 assert spike_slab_prior.log_prob(samples)[0] == -torch.inf
 
                 samples = torch.abs(samples)
                 assert torch.allclose(
                     spike_slab_prior.log_prob(samples)[0],
-                    (
-                        -1. + torch.log(torch.tensor(1. - p_spike))
-                        + torch.log(torch.tensor(p_spike))
-                        - 1. + torch.log(torch.tensor(1. - p_spike))
-                    )
+                    pos_only_log_prob,
                 )
             else:
                 assert torch.allclose(
                     spike_slab_prior.log_prob(samples)[0],
-                    (
-                        -1. + torch.log(torch.tensor(1. - p_spike)) - torch.log(torch.tensor(2.))
-                        + torch.log(torch.tensor(p_spike))
-                        - 1. + torch.log(torch.tensor(1. - p_spike)) - torch.log(torch.tensor(2.))
-                    )
+                    pos_only_log_prob - (D - 1) * torch.log(torch.tensor(2.)),
                 )
 
 
