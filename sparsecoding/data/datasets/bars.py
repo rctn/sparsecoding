@@ -123,18 +123,18 @@ class HierarchicalBarsDataset(Dataset):
 
         h_bars = h_bars.expand(self.P, self.P, self.P)
         v_bars = v_bars.expand(self.P, self.P, self.P)
-        l1_basis = torch.cat((h_bars, v_bars), dim=0)  # [2*P, P, P]
-        l1_basis /= np.sqrt(self.P)  # Normalize basis.
-        l1_basis = l1_basis.reshape((2 * self.P, self.P * self.P))
+        l2_basis = torch.cat((h_bars, v_bars), dim=0)  # [2*P, P, P]
+        l2_basis /= np.sqrt(self.P)  # Normalize basis.
+        l2_basis = l2_basis.reshape((2 * self.P, self.P * self.P))
 
         # Specify l0_basis: combinations of two bars on the border.
         border_bar_idxs = [0, self.P - 1, self.P, 2 * self.P - 1]
-        l0_basis_idxs = torch.tensor(list(itertools.combinations(border_bar_idxs, 2)))
-        l0_basis = torch.zeros((6, 2 * self.P), dtype=torch.float32)
-        l0_basis[torch.arange(6), l0_basis_idxs[:, 0]] = 1. / np.sqrt(2.)
-        l0_basis[torch.arange(6), l0_basis_idxs[:, 1]] = 1. / np.sqrt(2.)
+        l1_basis_idxs = torch.tensor(list(itertools.combinations(border_bar_idxs, 2)))
+        l1_basis = torch.zeros((6, 2 * self.P), dtype=torch.float32)
+        l1_basis[torch.arange(6), l1_basis_idxs[:, 0]] = 1. / np.sqrt(2.)
+        l1_basis[torch.arange(6), l1_basis_idxs[:, 1]] = 1. / np.sqrt(2.)
 
-        self.bases = [l0_basis, l1_basis]
+        self.bases = [l1_basis, l2_basis]
 
         self.weights = list(map(
             lambda prior: prior.sample(self.N),
