@@ -390,6 +390,7 @@ class Hierarchical(torch.nn.Module):
         data: torch.Tensor,
         n_iter: int = 1000,
         learning_rate: float = 0.1,
+        return_history: bool = False,
     ):
         """Infer weights for the input `data` to maximize the log-likelihood.
 
@@ -403,36 +404,70 @@ class Hierarchical(torch.nn.Module):
             Number of iterations of gradient descent to perform.
         learning_rate : float
             Learning rate for the optimizer.
+        return_history : bool
+            Flag to return the history of the inferred weights during inference.
 
         Returns
         -------
         weights : List[Tensor], length L, shape [N, D_i]
             Inferred weights for each layer.
+        weights_history : optional, List[Tensor], length L, shape [n_iter + 1, N, D_i]
+            Returned if `return_history`. The inferred weights for each layer
+            throughout inference.
         """
         N = data.shape[0]
 
-        weights = [
+        top_weights = [
             torch.zeros((N, self.dims[i]), dtype=torch.float32, requires_grad=True)
             for i in range(self.L - 1)
         ]
         bases = list(map(lambda basis: basis.detach(), self.bases))
 
-        optimizer = torch.optim.Adam(weights, lr=learning_rate)
+        if return_history:
+            with torch.no_grad():
+                bottom_weights = Hierarchical._compute_bottom_weights(data, bases, top_weights)
+                weights = top_weights + [bottom_weights]
+                weights_history = list(map(
+                    lambda weight: torch.unsqueeze(weight, dim=0),
+                    weights,
+                ))
+
+            def add_weights_to_history(x):
+                weights_history, weights = x
+                weights_history = torch.cat(
+                    (weights_history, weights.unsqueeze(0)),
+                    dim=0,
+                )
+                return weights_history
+
+        optimizer = torch.optim.Adam(top_weights, lr=learning_rate)
         for _ in range(n_iter):
-            log_prob = Hierarchical.log_prob(data, bases, self.priors, weights)
+            log_prob = Hierarchical.log_prob(data, bases, self.priors, top_weights)
             optimizer.zero_grad()
             (-torch.mean(log_prob)).backward()
             optimizer.step()
 
-        weights = list(map(lambda weight: weight.detach(), weights))
-        noise = (
-            data
-            - Hierarchical.generate(
-                self.bases,
-                weights + [torch.zeros_like(data)],
-            )
-        )
-        return weights + [noise]
+            if return_history:
+                with torch.no_grad():
+                    bottom_weights = Hierarchical._compute_bottom_weights(data, bases, top_weights)
+                    weights = top_weights + [bottom_weights]
+                    weights_history = list(map(
+                        add_weights_to_history,
+                        zip(weights_history, weights),
+                    ))
+
+        top_weights = list(map(lambda weight: weight.detach(), top_weights))
+        bottom_weights = Hierarchical._compute_bottom_weights(data, bases, top_weights)
+        weights = top_weights + [bottom_weights]
+
+        if not return_history:
+            return weights
+        else:
+            weights_history = list(map(
+                add_weights_to_history,
+                zip(weights_history, weights),
+            ))
+            return weights, weights_history
 
     def learn_bases(
         self,
@@ -441,6 +476,7 @@ class Hierarchical(torch.nn.Module):
         learning_rate: float = 0.01,
         inference_n_iter: int = 1000,
         inference_learning_rate: float = 0.1,
+        return_history: bool = False,
     ):
         """Update the bases to maximize the log-likelihood of `data`.
 
@@ -450,17 +486,28 @@ class Hierarchical(torch.nn.Module):
         Uses gradient descent with Adam.
 
         Parameters
-        ----------
-        data : Tensor, shape [N, D_L]
-            Data to be generated.
-        n_iter : int
-            Number of iterations of gradient descent to perform.
+        ----------training
+            Flag to return the history of the learned bases during inference.
 
         Returns
         -------
-        weights : List[Tensor], length L, shape [N, D_i]
-            Inferred weights for each layer.
+        bases_history : optional, List[Tensor], length L - 1, shape [n_iter + 1, D_i, D_{i+1}]
+            Returned if `return_history`. The learned bases throughout training.
         """
+        if return_history:
+            bases_history = list(map(
+                lambda basis: basis.detach().unsqueeze(0),
+                self.bases,
+            ))
+
+            def add_basis_to_history(x):
+                basis_history, basis = x
+                basis_history = torch.cat(
+                    (basis_history, basis.unsqueeze(0)),
+                    dim=0,
+                )
+                return basis_history
+
         optimizer = torch.optim.Adam(self.bases, lr=learning_rate)
         for _ in tqdm(range(n_iter)):
             weights = self.infer_weights(data, inference_n_iter, inference_learning_rate)
@@ -475,6 +522,15 @@ class Hierarchical(torch.nn.Module):
                 for basis in self.bases:
                     basis /= torch.norm(basis, dim=1, keepdim=True)
 
+                if return_history:
+                    bases_history = list(map(
+                        add_basis_to_history,
+                        zip(bases_history, self.bases),
+                    ))
+
+        if return_history:
+            return bases_history
+
     def inspect_bases(self):
         """Runs the generative model forward for each basis element.
 
@@ -483,18 +539,18 @@ class Hierarchical(torch.nn.Module):
 
         Returns
         -------
-        bases : List[List[Tensor]], shape [D_L]
+        bases_viz : List[List[Tensor]], shape [D_L]
             Visualizations of the basis functions at each layer.
         """
-        bases = []
+        bases_viz = []
         for layer in range(self.L - 1):
-            layer_bases = []
+            layer_bases_viz = []
             for basis_fn in range(self.bases[layer].shape[0]):
                 weights = [torch.zeros((1, dim)) for dim in self.dims]
                 weights[layer][0, basis_fn] = 1.
-                layer_bases.append(Hierarchical.generate(self.bases, weights))
-            bases.append(layer_bases)
-        return bases
+                layer_bases_viz.append(Hierarchical.generate(self.bases, weights)[0])
+            bases_viz.append(layer_bases_viz)
+        return bases_viz
 
     def _check_bases_weights(bases, weights):
         """Check bases and weights for shape compatibility.
@@ -566,6 +622,27 @@ class Hierarchical(torch.nn.Module):
                 f"The final basis outputs data with dimension {bases[-1].shape[1]}, "
                 f"but final layer prior is over {priors[-1].D} weights."
             )
+
+    def _compute_bottom_weights(
+        data: torch.Tensor,
+        bases: List[torch.Tensor],
+        top_weights: List[torch.Tensor],
+    ):
+        """Compute the bottom-layer weights for `data`, given weights for all the other layers.
+
+        Parameters
+        ----------
+        data : Tensor, shape [N, D_L]
+            Data to be generated.
+        bases : List[Tensor], length L - 1, shape [D_i, D_{i+1}]
+            Basis functions to transform between layers.
+        weights : List[Tensor], length L - 1, shape [N, D_i]
+            Weights at the top `L - 1` layers.
+        """
+        weights = top_weights + [torch.zeros_like(data)]
+        Hierarchical._check_bases_weights(bases, weights)
+        bottom_weights = data - Hierarchical.generate(bases, weights)
+        return bottom_weights
 
 
 class SimulSparseCoding(SparseCoding):
