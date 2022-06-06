@@ -496,7 +496,19 @@ class Hierarchical(torch.nn.Module):
         Uses gradient descent with Adam.
 
         Parameters
-        ----------training
+        ----------
+        data : Tensor, shape [N, D_L]
+            Data to be generated.
+        n_iter : int
+            Number of iterations of gradient descent to perform.
+        learning_rate : float
+            Step-size for learning the bases.
+        inference_n_iter : int
+            Number of iterations of gradient descent
+            to perform during weight inference.
+        inference_learning_rate : float
+            Step-size for inferring the weights.
+        return_history : bool
             Flag to return the history of the learned bases during inference.
 
         Returns
