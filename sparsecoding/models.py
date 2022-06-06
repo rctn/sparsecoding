@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import pickle as pkl
@@ -391,6 +391,7 @@ class Hierarchical(torch.nn.Module):
         n_iter: int = 1000,
         learning_rate: float = 0.1,
         return_history: bool = False,
+        initial_weights: Optional[List[torch.Tensor]] = None,
     ):
         """Infer weights for the input `data` to maximize the log-likelihood.
 
@@ -406,6 +407,9 @@ class Hierarchical(torch.nn.Module):
             Learning rate for the optimizer.
         return_history : bool
             Flag to return the history of the inferred weights during inference.
+        initial_weights : optional, List[Tensor], length L - 1, shape [N, D_i]
+            If provided, the initial weights to start inference from.
+            Otherwise, weights are set to 0.
 
         Returns
         -------
@@ -417,10 +421,16 @@ class Hierarchical(torch.nn.Module):
         """
         N = data.shape[0]
 
-        top_weights = [
-            torch.zeros((N, self.dims[i]), dtype=torch.float32, requires_grad=True)
-            for i in range(self.L - 1)
-        ]
+        if initial_weights is None:
+            top_weights = [
+                torch.zeros((N, self.dims[i]), dtype=torch.float32, requires_grad=True)
+                for i in range(self.L - 1)
+            ]
+        else:
+            top_weights = initial_weights
+            for weight in top_weights:
+                weight.requires_grad = True
+
         bases = list(map(lambda basis: basis.detach(), self.bases))
 
         if return_history:
