@@ -484,8 +484,8 @@ class Hierarchical(torch.nn.Module):
         data: torch.Tensor,
         n_iter: int = 125,
         learning_rate: float = 0.01,
-        inference_n_iter: int = 1000,
-        inference_learning_rate: float = 0.1,
+        inference_n_iter: int = 25,
+        inference_learning_rate: float = 0.01,
         return_history: bool = False,
     ):
         """Update the bases to maximize the log-likelihood of `data`.
@@ -515,7 +515,9 @@ class Hierarchical(torch.nn.Module):
         -------
         bases_history : optional, List[Tensor], length L - 1, shape [n_iter + 1, D_i, D_{i+1}]
             Returned if `return_history`. The learned bases throughout training.
-        """
+        """    
+        N = data.shape[0]
+
         if return_history:
             bases_history = list(map(
                 lambda basis: basis.detach().unsqueeze(0),
@@ -530,14 +532,29 @@ class Hierarchical(torch.nn.Module):
                 )
                 return basis_history
 
-        optimizer = torch.optim.Adam(self.bases, lr=learning_rate)
-        for _ in tqdm(range(n_iter)):
-            weights = self.infer_weights(data, inference_n_iter, inference_learning_rate)
+        bases_optimizer = torch.optim.Adam(self.bases, lr=learning_rate)
 
-            log_prob = Hierarchical.log_prob(data, self.bases, self.priors, weights[:-1])
-            optimizer.zero_grad()
+        top_weights = [
+            torch.zeros((N, self.dims[i]), dtype=torch.float32, requires_grad=True)
+            for i in range(self.L - 1)
+        ]
+        weights_optimizer = torch.optim.Adam(top_weights, lr=inference_learning_rate)
+        
+        for _ in tqdm(range(n_iter)):
+            # Infer weights under the current bases.
+            bases = list(map(lambda basis: basis.detach(), self.bases))
+            for _ in range(inference_n_iter):
+                log_prob = Hierarchical.log_prob(data, bases, self.priors, top_weights)
+                weights_optimizer.zero_grad()
+                (-torch.mean(log_prob)).backward()
+                weights_optimizer.step()
+
+            # Update bases from the current weights.
+            weights = list(map(lambda weight: weight.detach(), top_weights))
+            log_prob = Hierarchical.log_prob(data, self.bases, self.priors, weights)
+            bases_optimizer.zero_grad()
             (-torch.mean(log_prob)).backward()
-            optimizer.step()
+            bases_optimizer.step()
 
             # Normalize basis elements (project them back onto the unit sphere).
             with torch.no_grad():
