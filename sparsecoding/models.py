@@ -438,17 +438,9 @@ class Hierarchical(torch.nn.Module):
                 bottom_weights = Hierarchical._compute_bottom_weights(data, bases, top_weights)
                 weights = top_weights + [bottom_weights]
                 weights_history = list(map(
-                    lambda weight: torch.unsqueeze(weight, dim=0),
+                    lambda weight: [weight.detach().clone()],
                     weights,
                 ))
-
-            def add_weights_to_history(x):
-                weights_history, weights = x
-                weights_history = torch.cat(
-                    (weights_history, weights.unsqueeze(0)),
-                    dim=0,
-                )
-                return weights_history
 
         optimizer = torch.optim.Adam(top_weights, lr=learning_rate)
         for _ in range(n_iter):
@@ -461,10 +453,8 @@ class Hierarchical(torch.nn.Module):
                 with torch.no_grad():
                     bottom_weights = Hierarchical._compute_bottom_weights(data, bases, top_weights)
                     weights = top_weights + [bottom_weights]
-                    weights_history = list(map(
-                        add_weights_to_history,
-                        zip(weights_history, weights),
-                    ))
+                    for (weight_history, weight) in zip(weights_history, weights):
+                        weight_history.append(weight.detach().clone())
 
         top_weights = list(map(lambda weight: weight.detach(), top_weights))
         bottom_weights = Hierarchical._compute_bottom_weights(data, bases, top_weights)
@@ -473,10 +463,8 @@ class Hierarchical(torch.nn.Module):
         if not return_history:
             return weights
         else:
-            weights_history = list(map(
-                add_weights_to_history,
-                zip(weights_history, weights),
-            ))
+            for layer in range(self.L):
+                weight_history[layer] = torch.stack(weight_history[layer], dim=0)
             return weights, weights_history
 
     def learn_bases(
@@ -520,17 +508,9 @@ class Hierarchical(torch.nn.Module):
 
         if return_history:
             bases_history = list(map(
-                lambda basis: basis.detach().unsqueeze(0),
+                lambda basis: [basis.detach().clone()],
                 self.bases,
             ))
-
-            def add_basis_to_history(x):
-                basis_history, basis = x
-                basis_history = torch.cat(
-                    (basis_history, basis.unsqueeze(0)),
-                    dim=0,
-                )
-                return basis_history
 
         bases_optimizer = torch.optim.Adam(self.bases, lr=learning_rate)
 
@@ -562,12 +542,12 @@ class Hierarchical(torch.nn.Module):
                     basis /= torch.norm(basis, dim=1, keepdim=True)
 
                 if return_history:
-                    bases_history = list(map(
-                        add_basis_to_history,
-                        zip(bases_history, self.bases),
-                    ))
+                    for (basis_history, basis) in zip(bases_history, self.bases):
+                        basis_history.append(basis.detach().clone())
 
         if return_history:
+            for layer in range(self.L):
+                bases_history[layer] = torch.stack(bases_history[layer], dim=0)
             return bases_history
 
     def inspect_bases(self):
