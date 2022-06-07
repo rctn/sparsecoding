@@ -467,6 +467,122 @@ class Hierarchical(torch.nn.Module):
                 weight_history[layer] = torch.stack(weight_history[layer], dim=0)
             return weights, weights_history
 
+    def infer_weights_local(
+        self,
+        data: torch.Tensor,
+        n_iter: int = 100000,
+        learning_rate: float = 0.0001,
+        return_history_interval: Optional[int] = None,
+        initial_weights: Optional[List[torch.Tensor]] = None,
+    ):
+        """Infer weights for the input `data` to maximize the log-likelihood.
+        However, information flow is constrained to be between adjacent layers.
+
+        Performs gradient descent with Adam.
+
+        Parameters
+        ----------
+        data : Tensor, shape [N, D_L]
+            Data to be generated.
+        n_iter : int
+            Number of iterations of gradient descent to perform.
+        learning_rate : float
+            Learning rate for the optimizer.
+        return_history_interval : optional, int
+            If set, inferred weights during inference will be saved
+            at this frequency.
+        initial_weights : optional, List[Tensor], length L - 1, shape [N, D_i]
+            If provided, the initial weights to start inference from.
+            Otherwise, weights are set to 0.
+
+        Returns
+        -------
+        weights : List[Tensor], length L, shape [N, D_i]
+            Inferred weights for each layer.
+        weights_history : optional, List[Tensor], length L, shape [n_iter + 1, N, D_i]
+            Returned if `return_history`. The inferred weights for each layer
+            throughout inference.
+        """
+        N = data.shape[0]
+
+        if initial_weights is None:
+            top_weights = [
+                torch.zeros((N, self.dims[i]), dtype=torch.float32, requires_grad=True)
+                for i in range(self.L - 1)
+            ]
+        else:
+            top_weights = initial_weights
+            for weight in top_weights:
+                weight.requires_grad = True
+
+        bases = list(map(lambda basis: basis.detach(), self.bases))
+
+        if return_history_interval:
+            with torch.no_grad():
+                bottom_weights = Hierarchical._compute_bottom_weights(data, bases, top_weights)
+                weights = top_weights + [bottom_weights]
+                weights_history = [[weight.detach()] for weight in weights]
+
+        optimizer = torch.optim.Adam(top_weights, lr=learning_rate)
+        for it in range(n_iter):
+            # Generate data under current weights (with no gradient) to get targets.
+            xs_ng = []
+            with torch.no_grad():
+                xs_ng.append(top_weights[0].detach())
+                for (basis, weight) in zip(bases[:-1], top_weights[1:]):
+                    xs_ng.append(xs_ng[-1] @ basis + weight.detach())
+                xs_ng.append(data)
+            
+            # Get log-probability for Layer 1.
+            weight_1 = top_weights[0]
+            x_ng_below = xs_ng[1]
+            basis_to_below = bases[0]
+            prior = self.priors[0]
+            prior_below = self.priors[1]
+            log_prob = (
+                prior.log_prob(weight_1)
+                + prior_below.log_prob(x_ng_below - weight_1 @ basis_to_below)
+            )
+
+            # Get log-probabilities for Layers 2 through L.
+            for layer in range(2, self.L):
+                weight = top_weights[layer - 1]
+                
+                x_ng_above = xs_ng[layer - 2]
+                basis_from_above = bases[layer - 2]
+                
+                x_ng_below = xs_ng[layer]
+                basis_to_below = bases[layer - 1]
+                
+                prior = self.priors[layer - 1]
+                prior_below = self.priors[layer]
+                log_prob += (
+                    prior.log_prob(weight)
+                    + prior_below.log_prob(x_ng_below - (x_ng_above @ basis_from_above + weight) @ basis_to_below)
+                )
+            
+            optimizer.zero_grad()
+            (-torch.mean(log_prob)).backward()
+            optimizer.step()
+            
+            if return_history_interval and it % return_history_interval == 0:
+                with torch.no_grad():
+                    bottom_weights = Hierarchical._compute_bottom_weights(data, bases, top_weights)
+                    weights = top_weights + [bottom_weights]
+                    for (weight_history, weight) in zip(weights_history, weights):
+                        weight_history.append(weight.detach().clone())
+
+        top_weights = list(map(lambda weight: weight.detach(), top_weights))
+        bottom_weights = Hierarchical._compute_bottom_weights(data, bases, top_weights)
+        weights = top_weights + [bottom_weights]
+
+        if not return_history_interval:
+            return weights
+        else:
+            for layer in range(self.L):
+                weights_history[layer] = torch.stack(weights_history[layer], dim=0)
+            return weights, weights_history
+
     def learn_bases(
         self,
         data: torch.Tensor,
