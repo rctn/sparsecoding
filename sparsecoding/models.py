@@ -662,7 +662,7 @@ class Hierarchical(torch.nn.Module):
                         basis_history.append(basis.detach().clone())
 
         if return_history:
-            for layer in range(self.L):
+            for layer in range(self.L - 1):
                 bases_history[layer] = torch.stack(bases_history[layer], dim=0)
             return bases_history
 
