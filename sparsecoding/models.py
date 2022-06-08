@@ -587,6 +587,7 @@ class Hierarchical(torch.nn.Module):
         self,
         data: torch.Tensor,
         n_iter: int = 125,
+        batch_size: Optional[int] = None,
         learning_rate: float = 0.01,
         inference_n_iter: int = 25,
         inference_learning_rate: float = 0.01,
@@ -597,14 +598,17 @@ class Hierarchical(torch.nn.Module):
         In each iteration, we first infer the weights under the current basis functions,
         and then we update the bases with those weights fixed.
 
-        Uses gradient descent with Adam.
+        Uses (stochastic) gradient descent with Adam.
 
         Parameters
         ----------
         data : Tensor, shape [N, D_L]
             Data to be generated.
         n_iter : int
-            Number of iterations of gradient descent to perform.
+            Number of iterations of (stochastic) gradient descent to perform.
+        batch_size : optional, int, default=None
+            If provided, the batch size used during Stochastic Gradient Descent.
+            Otherwise, performs Gradient Descent using the entire dataset.
         learning_rate : float
             Step-size for learning the bases.
         inference_n_iter : int
@@ -622,6 +626,10 @@ class Hierarchical(torch.nn.Module):
         """    
         N = data.shape[0]
 
+        do_sgd = (batch_size is None)
+        if batch_size is None:
+            batch_size = N
+
         if return_history:
             bases_history = list(map(
                 lambda basis: [basis.detach().clone()],
@@ -631,35 +639,60 @@ class Hierarchical(torch.nn.Module):
         bases_optimizer = torch.optim.Adam(self.bases, lr=learning_rate)
 
         top_weights = [
-            torch.zeros((N, self.dims[i]), dtype=torch.float32, requires_grad=True)
+            torch.zeros((N, self.dims[i]), dtype=torch.float32)
             for i in range(self.L - 1)
         ]
-        weights_optimizer = torch.optim.Adam(top_weights, lr=inference_learning_rate)
-        
+
         for _ in tqdm(range(n_iter)):
-            # Infer weights under the current bases.
-            bases = list(map(lambda basis: basis.detach(), self.bases))
-            for _ in range(inference_n_iter):
-                log_prob = Hierarchical.log_prob(data, bases, self.priors, top_weights)
-                weights_optimizer.zero_grad()
+            if do_sgd:
+                epoch_idxs = torch.randperm(N)
+                epoch_data = data.clone()
+                epoch_data = epoch_data[epoch_idxs]
+                epoch_top_weights = [weight[epoch_idxs] for weight in top_weights]
+            else:
+                epoch_data = data
+                epoch_top_weights = top_weights
+
+            for batch in range(N // batch_size):
+                batch_start_idx = batch * batch_size
+                batch_end_idx = (batch + 1) * batch_size
+                batch_data = epoch_data[batch_start_idx:batch_end_idx]
+
+                # Infer weights under the current bases.
+                batch_top_weights = [
+                    weight[batch_start_idx:batch_end_idx]
+                    for weight
+                    in epoch_top_weights
+                ]
+                for weight in batch_top_weights:
+                    weight.requires_grad = True
+                batch_weights_optimizer = torch.optim.Adam(batch_top_weights, lr=inference_learning_rate)
+                bases = list(map(lambda basis: basis.detach(), self.bases))
+                for _ in range(inference_n_iter):
+                    log_prob = Hierarchical.log_prob(batch_data, bases, self.priors, batch_top_weights)
+                    batch_weights_optimizer.zero_grad()
+                    (-torch.mean(log_prob)).backward()
+                    batch_weights_optimizer.step()
+
+                # Update bases from the current weights.
+                batch_top_weights = list(map(lambda weight: weight.detach(), batch_top_weights))
+                log_prob = Hierarchical.log_prob(batch_data, self.bases, self.priors, batch_top_weights)
+                bases_optimizer.zero_grad()
                 (-torch.mean(log_prob)).backward()
-                weights_optimizer.step()
+                bases_optimizer.step()
 
-            # Update bases from the current weights.
-            weights = list(map(lambda weight: weight.detach(), top_weights))
-            log_prob = Hierarchical.log_prob(data, self.bases, self.priors, weights)
-            bases_optimizer.zero_grad()
-            (-torch.mean(log_prob)).backward()
-            bases_optimizer.step()
+                # Normalize basis elements (project them back onto the unit sphere).
+                with torch.no_grad():
+                    for basis in self.bases:
+                        basis /= torch.norm(basis, dim=1, keepdim=True)
 
-            # Normalize basis elements (project them back onto the unit sphere).
-            with torch.no_grad():
-                for basis in self.bases:
-                    basis /= torch.norm(basis, dim=1, keepdim=True)
-
-                if return_history:
-                    for (basis_history, basis) in zip(bases_history, self.bases):
-                        basis_history.append(basis.detach().clone())
+            if do_sgd:
+                for (top_weight, epoch_top_weight) in zip(top_weights, epoch_top_weights):
+                    top_weight[epoch_idxs] = epoch_top_weight.detach()
+        
+            if return_history:
+                for (basis_history, basis) in zip(bases_history, self.bases):
+                    basis_history.append(basis.detach().clone())
 
         if return_history:
             for layer in range(self.L - 1):
