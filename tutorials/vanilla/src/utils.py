@@ -98,9 +98,9 @@ def display_sbs(orig, recon, title=None, bar=True, cmap="gray", dpi=150, vrange=
 
     Parameters
     ----------
-    orig : Tensor of original image patches to display. Shape is 
+    orig : Tensor of original image patches to display. Shape is
         (batch_size, pixels_per_patch).
-    recon : Tensor of reconstructed image patches to display. Shape is 
+    recon : Tensor of reconstructed image patches to display. Shape is
         (batch_size, pixels_per_patch).
     title : String; title of figure. Optional.
     bar : Whether to show color bar on the side. Optional; default True.
@@ -211,7 +211,7 @@ def plot_loss_sbs(mse, sparse_cost):
 
 
 def plot_coeffs(coeffs, title="patch_coefficients"):
-    """Plots coefficient stem plot for one patch. 
+    """Plots coefficient stem plot for one patch.
 
     coeffs is Tensor of shape (batch_size, number_of_bases).
     """
