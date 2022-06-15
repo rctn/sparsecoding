@@ -185,7 +185,7 @@ def plot_loss(y, title):
 
 
 def plot_loss_sbs(mse, sparse_cost):
-    """Plots loss per epoch with smoothing. 
+    """Plots loss per epoch with smoothing.
 
     mse and sparse_cost are lists of scalars.
     """
