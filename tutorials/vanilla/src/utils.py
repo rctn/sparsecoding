@@ -224,27 +224,6 @@ def plot_coeffs(coeffs, title="patch_coefficients"):
         labelbottom=False)
     plt.show()
 
-# def coeff_grid(coeffs):
-#     """Plots stem for coefficients of half a batch, arranges them into a grid.
-
-#     coeffs is Tensor of shape (batch_size, number_of_bases).
-#     """
-#     batch_size = coeffs.shape[0]
-#     fig = plt.gcf()
-
-#     # Show coefficients of half of the images in the batch.
-#     for i in range(batch_size//2):
-#         plt.subplot(batch_size//5, 5, i+1)
-#         plt.stem(coeffs[i], use_line_collection=True)
-#         plt.title("patch {}".format(i))
-#         plt.tick_params(
-#             axis='x',
-#             which='both',
-#             bottom=False,
-#             labelbottom=False)
-#     fig.set_size_inches(30, 70)
-#     plt.show()
-
 
 def coeff_grid(coeffs):
     """Plots stem for coefficients of half a batch, arranges them into a grid.
