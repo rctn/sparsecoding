@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import make_interp_spline
 import scipy.io as sio
-from sparsecoding import preprocess
+from sparsecoding.data.transforms.patch import patchify
 import torch
 from torchvision.utils import make_grid
 
@@ -151,12 +151,11 @@ def create_patches(imgs, epochs, batch_size, N, rng):
     -------
     patches : Tensor of size (batch_size, pixels_per_patch).
     """
-    n_divisions = imgs.shape[1]//int(np.sqrt(N))
-    patches = preprocess.patch_images(imgs.permute(1, 2, 0), n_divisions)[0]
-    patches = patches.reshape(
-        patches.shape[0] * patches.shape[1], patches.shape[2], patches.shape[3])
-    perm = torch.randint(low=0, high=patches.shape[0], size=(
-        1, epochs*batch_size), generator=rng)
+    patch_size = int(np.sqrt(N))
+    patches = patchify(patch_size, imgs.unsqueeze(1))
+    patches = patches.reshape(-1, patch_size, patch_size)
+    perm = torch.randint(low=0, high=patches.shape[0],
+        size=(epochs*batch_size,), generator=rng)
     patches = patches[perm].reshape(
         (epochs, batch_size, N))
     return patches
