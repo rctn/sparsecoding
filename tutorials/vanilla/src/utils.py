@@ -155,7 +155,7 @@ def create_patches(imgs, epochs, batch_size, N, rng):
     patches = patchify(patch_size, imgs.unsqueeze(1))
     patches = patches.reshape(-1, patch_size, patch_size)
     perm = torch.randint(low=0, high=patches.shape[0],
-        size=(epochs*batch_size,), generator=rng)
+                         size=(epochs*batch_size,), generator=rng)
     patches = patches[perm].reshape(
         (epochs, batch_size, N))
     return patches
