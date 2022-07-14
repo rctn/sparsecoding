@@ -72,7 +72,6 @@ class InferenceMethod:
         if torch.isnan(data).any():
             raise ValueError("InferenceMethod error: nan in %s." % (name))
 
-
 class LCA(InferenceMethod):
     def __init__(self, n_iter=100, coeff_lr=1e-3, threshold=0.1,
                  stop_early=False, epsilon=1e-2, solver=None,
@@ -201,11 +200,11 @@ class LCA(InferenceMethod):
             # check return all
             if self.return_all_coefficients != "none":
                 if self.return_all_coefficients == "active":
-                    coefficients = torch.concat([coefficients,
-                                                 self.threshold_nonlinearity(u).clone().unsqueeze(1)], dim=1)
+                    coefficients = torch.concat(
+                        [coefficients, self.threshold_nonlinearity(u).clone().unsqueeze(1)], dim=1)
                 else:
-                    coefficients = torch.concat([coefficients,
-                                                 u.clone().unsqueeze(1)], dim=1)
+                    coefficients = torch.concat(
+                        [coefficients, u.clone().unsqueeze(1)], dim=1)
 
             # compute new
             a = self.threshold_nonlinearity(u)
@@ -221,14 +220,12 @@ class LCA(InferenceMethod):
             if use_checknan:
                 self.checknan(u, "coefficients")
 
-        # return active units if return_all_coefficients in ["none","active"]
+        # return active units if return_all_coefficients in ["none", "active"]
         if self.return_all_coefficients == "membrane":
-            coefficients = torch.concat([coefficients,
-                                         u.clone().unsqueeze(1)], dim=1)
+            coefficients = torch.concat([coefficients, u.clone().unsqueeze(1)], dim=1)
         else:
             final_coefficients = self.threshold_nonlinearity(u)
-            coefficients = torch.concat([coefficients,
-                                         final_coefficients.clone().unsqueeze(1)], dim=1)
+            coefficients = torch.concat([coefficients, final_coefficients.clone().unsqueeze(1)], dim=1)
 
         return coefficients.squeeze()
 
@@ -334,8 +331,7 @@ class Vanilla(InferenceMethod):
         for i in range(self.n_iter):
 
             if self.return_all_coefficients:
-                coefficients = torch.concat([coefficients,
-                                             a.clone().unsqueeze(1)], dim=1)
+                coefficients = torch.concat([coefficients, a.clone().unsqueeze(1)], dim=1)
 
             if self.stop_early:
                 old_a = a.clone().detach()
@@ -476,8 +472,7 @@ class ISTA(InferenceMethod):
             if use_checknan:
                 self.checknan(u, "coefficients")
 
-        coefficients = torch.concat([coefficients,
-                                     self.coefficients.clone().unsqueeze(1)], dim=1)
+        coefficients = torch.concat([coefficients, self.coefficients.clone().unsqueeze(1)], dim=1)
         return torch.squeeze(coefficients)
 
 
@@ -677,17 +672,18 @@ class PyTorchOptimizer(InferenceMethod):
         if coeff_0 is not None:
             coefficients = coeff_0.requires_grad_(True)
         else:
-            coefficients = torch.zeros((batch_size, n_basis),
-                                       requires_grad=True, device=device)
+            coefficients = torch.zeros((batch_size, n_basis), requires_grad=True, device=device)
 
         optimizer = self.optimizer_f([coefficients])
 
         for i in range(self.n_iter):
 
             # compute LSM loss for the current iteration
-            loss = self.loss_f(data=data,
-                               dictionary=dictionary,
-                               coefficients=coefficients)
+            loss = self.loss_f(
+                data=data,
+                dictionary=dictionary,
+                coefficients=coefficients,
+            )
 
             optimizer.zero_grad()
 
@@ -700,7 +696,6 @@ class PyTorchOptimizer(InferenceMethod):
             optimizer.step()
 
         return coefficients.detach()
-
 
 
 class IHT(InferenceMethod):
@@ -730,8 +725,6 @@ class IHT(InferenceMethod):
         self.sparsity = sparsity
         self.return_all_coefficients = return_all_coefficients
 
-
-
     def infer(self, data, dictionary):
         """
         Infer coefficients for each image in data using dict elements dictionary using Iterative Hard Thresholding (IHT)
@@ -759,28 +752,27 @@ class IHT(InferenceMethod):
         coefficients = torch.zeros(
             batch_size, n_basis, requires_grad=False, device=device)
 
-
         for _ in range(self.n_iter):
             # Compute the prediction given the current coefficients
             preds = coefficients @ dictionary.T  # [batch_size, n_features]
-            
+
             # Compute the residual
             delta = data - preds  # [batch_size, n_features]
-            
-            # Compute the similarity between the residual and the atoms in the dictionary 
+
+            # Compute the similarity between the residual and the atoms in the dictionary
             update = delta @ dictionary  # [batch_size, n_basis]
             coefficients = coefficients + update  # [batch_size, n_basis]
-            
-            # Apply kWTA nonlinearity            
-            topK_values, indices = torch.topk(torch.abs(coefficients), K, dim=1)  
-            
+
+            # Apply kWTA nonlinearity
+            topK_values, indices = torch.topk(torch.abs(coefficients), K, dim=1)
+
             # Reconstruct coefficients using the output of torch.topk
-            coefficients = torch.sign(coefficients) * torch.zeros(batch_size, n_basis, device=device).scatter_(1, indices, topK_values) # [batch_size, n_basis]
+            coefficients = torch.sign(coefficients) * torch.zeros(batch_size, n_basis,
+                                                                  device=device).scatter_(1, indices, topK_values)  # [batch_size, n_basis]
 
         return coefficients.detach()
 
 
- 
 class MP(InferenceMethod):
     """
     Infer coefficients for each image in data using elements dictionary.
@@ -805,8 +797,6 @@ class MP(InferenceMethod):
         self.sparsity = sparsity
         self.return_all_coefficients = return_all_coefficients
 
-
-
     def infer(self, data, dictionary):
         """
         Infer coefficients for each image in data using dict elements dictionary using Matching Pursuit (MP)
@@ -829,43 +819,30 @@ class MP(InferenceMethod):
 
         # Define signal sparsity
         K = np.ceil(self.sparsity*n_basis).astype(int)
-        
-        # Get dictionary norms in case atoms are not normalized 
-        dictionary_norms = torch.norm(dictionary, p=2, dim=0,keepdim=True)        
-        
+
+        # Get dictionary norms in case atoms are not normalized
+        dictionary_norms = torch.norm(dictionary, p=2, dim=0, keepdim=True)
+
         # Initialize coefficients for the whole batch
         coefficients = torch.zeros(
             batch_size, n_basis, requires_grad=False, device=device)
-        
-        # For each sample in the batch
-        for i in range(0, batch_size):
-            # Pick ith sample 
-            y = torch.clone(data[i:i+1,:])
-            
-            # Initialize coefficients for ith sample 
-            coeff = torch.zeros(
-                1, n_basis, requires_grad=False, device=device)
-                
-            for t in range(0, K):    
-                
-                # Compute inner product
-                dp = torch.mm(y,dictionary)
-                
-                # Get the location of the most activated  atom
-                ind = torch.argmax(torch.abs(dp)/dictionary_norms)
 
-                # Add new value of the most activated atom
-                coeff[0,ind] = dp[0,ind]
+        residual = data.clone()  # [batch_size, n_features]
 
-                # Explain away the chosen atom
-                y = y - dp[0,ind]*dictionary[:,ind:ind+1].t()
-                
-            coefficients[i,:] = coeff
+        for _ in range(K):
+            # Select which (coefficient, basis function) pair to update using the inner product.
+            candidate_coefs = residual @ dictionary  # [batch_size, n_basis]
+            top_coef_idxs = torch.argmax(torch.abs(candidate_coefs) / dictionary_norms, dim=1)  # [batch_size]
+
+            # Update the coefficient.
+            top_coefs = candidate_coefs[torch.arange(batch_size), top_coef_idxs]  # [batch_size]
+            coefficients[torch.arange(batch_size), top_coef_idxs] = top_coefs
+
+            # Explain away/subtract the chosen coefficient and corresponding basis from the residual.
+            top_coef_bases = dictionary[..., top_coef_idxs]  # [n_features, batch_size]
+            residual = residual - top_coefs.reshape(batch_size, 1) * top_coef_bases.T  # [batch_size, n_features]
 
         return coefficients.detach()
-
-
-
 
 
 class OMP(InferenceMethod):
@@ -892,8 +869,6 @@ class OMP(InferenceMethod):
         self.sparsity = sparsity
         self.return_all_coefficients = return_all_coefficients
 
-
-
     def infer(self, data, dictionary):
         """
         Infer coefficients for each image in data using dict elements dictionary using Orthogonal Matching Pursuit (OMP)
@@ -916,47 +891,35 @@ class OMP(InferenceMethod):
 
         # Define signal sparsity
         K = np.ceil(self.sparsity*n_basis).astype(int)
-        
-        # Get dictionary norms in case atoms are not normalized 
-        dictionary_norms = torch.norm(dictionary, p=2, dim=0,keepdim=True)        
-        
+
+        # Get dictionary norms in case atoms are not normalized
+        dictionary_norms = torch.norm(dictionary, p=2, dim=0, keepdim=True)
+
         # Initialize coefficients for the whole batch
         coefficients = torch.zeros(
             batch_size, n_basis, requires_grad=False, device=device)
-        
-        # For each sample in the batch
-        for i in range(0, batch_size):
-            # Pick ith sample 
-            y = torch.clone(data[i:i+1,:])
-            
-            # Initialize residual
-            y_res = torch.clone(y)           
 
-            #Store indices of the chosen atoms
-            indices = torch.empty((0), dtype=torch.int64, device=device)
-            
-            # Initialize coefficients for ith sample 
-            coeff = torch.zeros(
-                1, n_basis, requires_grad=False, device=device)
-                
-            for t in range(0, K):    
-                
-                # Compute inner product
-                dp = torch.mm(y_res,dictionary)
-                
-                # Get the location of the most activated  atom
-                ind = torch.argmax(torch.abs(dp)/dictionary_norms)
+        residual = data.clone()  # [batch_size, n_features]
 
-                #Add the chosen atom
-                indices = torch.cat((indices, ind.unsqueeze(0)), 0)
-                
-                # Solve MSE minimization using the subset of the chosen atoms
-                coeff[0,indices] = torch.squeeze(torch.mm(torch.linalg.pinv(dictionary[:,indices]), y.t()))
+        # The basis functions that are used to infer the coefficients will be updated each time.
+        used_basis_fns = torch.zeros((batch_size, n_basis), dtype=torch.bool)
 
-                # Compute the residual by explaining away the current coefficients
-                y_res = y - torch.mm(dictionary, coeff.t()).t()
-                
-            coefficients[i,:] = coeff
+        for t in range(K):
+            # Select which (coefficient, basis function) pair to update using the inner product.
+            candidate_coefs = residual @ dictionary  # [batch_size, n_basis]
+            top_coef_idxs = torch.argmax(torch.abs(candidate_coefs) / dictionary_norms, dim=1)  # [batch_size]
+            used_basis_fns[torch.arange(batch_size), top_coef_idxs] = True
+
+            # Update the coefficients
+            used_dictionary = dictionary[..., used_basis_fns.nonzero()[:, 1]].reshape((n_features, batch_size, t + 1))
+
+            (used_coefficients, _, _, _) = torch.linalg.lstsq(
+                used_dictionary.permute((1, 0, 2)),  # [batch_size, n_features, t + 1]
+                data.reshape(batch_size, n_features, 1),
+            )  # [batch_size, t + 1, 1]
+            coefficients[used_basis_fns] = used_coefficients.reshape(-1)
+
+            # Update the residual.
+            residual = data.clone() - coefficients @ dictionary.T  # [batch_size, n_features]
 
         return coefficients.detach()
-
