@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 
@@ -71,6 +72,7 @@ class InferenceMethod:
         """
         if torch.isnan(data).any():
             raise ValueError("InferenceMethod error: nan in %s." % (name))
+
 
 class LCA(InferenceMethod):
     def __init__(self, n_iter=100, coeff_lr=1e-3, threshold=0.1,
@@ -701,7 +703,8 @@ class PyTorchOptimizer(InferenceMethod):
 class IHT(InferenceMethod):
     """
     Infer coefficients for each image in data using elements dictionary.
-    Method description can be traced to "Iterative Hard Thresholding for Compressed Sensing" (T. Blumensath & M. E. Davies, 2009)
+    Method description can be traced to
+    "Iterative Hard Thresholding for Compressed Sensing" (T. Blumensath & M. E. Davies, 2009)
     """
 
     def __init__(self, sparsity, n_iter=10, solver=None, return_all_coefficients=False):
@@ -710,7 +713,8 @@ class IHT(InferenceMethod):
         Parameters
         ----------
         sparsity : scalar (1,)
-            Sparsity of the solution. The number of active coefficients will be set to ceil(sparsity * data_dim) at the end of each iterative update.        
+            Sparsity of the solution. The number of active coefficients will be set
+            to ceil(sparsity * data_dim) at the end of each iterative update.
         n_iter : scalar (1,) default=100
             number of iterations to run for an inference method
         return_all_coefficients : string (1,) default=False
@@ -767,8 +771,10 @@ class IHT(InferenceMethod):
             topK_values, indices = torch.topk(torch.abs(coefficients), K, dim=1)
 
             # Reconstruct coefficients using the output of torch.topk
-            coefficients = torch.sign(coefficients) * torch.zeros(batch_size, n_basis,
-                                                                  device=device).scatter_(1, indices, topK_values)  # [batch_size, n_basis]
+            coefficients = (
+                torch.sign(coefficients)
+                * torch.zeros(batch_size, n_basis, device=device).scatter_(1, indices, topK_values)
+            )
 
         return coefficients.detach()
 
@@ -776,7 +782,8 @@ class IHT(InferenceMethod):
 class MP(InferenceMethod):
     """
     Infer coefficients for each image in data using elements dictionary.
-    Method description can be traced to "Matching Pursuits with Time-Frequency Dictionaries" (S. G. Mallat & Z. Zhang, 1993)
+    Method description can be traced
+    to "Matching Pursuits with Time-Frequency Dictionaries" (S. G. Mallat & Z. Zhang, 1993)
     """
 
     def __init__(self, sparsity, solver=None, return_all_coefficients=False):
@@ -785,7 +792,7 @@ class MP(InferenceMethod):
         Parameters
         ----------
         sparsity : scalar (1,)
-            sparsity of the solution        
+            sparsity of the solution
         return_all_coefficients : string (1,) default=False
             returns all coefficients during inference procedure if True
             user beware: if n_iter is large, setting this parameter to True
@@ -848,7 +855,9 @@ class MP(InferenceMethod):
 class OMP(InferenceMethod):
     """
     Infer coefficients for each image in data using elements dictionary.
-    Method description can be traced to "Orthogonal Matching Pursuit: Recursive Function Approximation with Application to Wavelet Decomposition" (Y. Pati & R. Rezaiifar & P. Krishnaprasad, 1993)
+    Method description can be traced to:
+        "Orthogonal Matching Pursuit: Recursive Function Approximation with Application to Wavelet Decomposition"
+        (Y. Pati & R. Rezaiifar & P. Krishnaprasad, 1993)
     """
 
     def __init__(self, sparsity, solver=None, return_all_coefficients=False):
@@ -857,7 +866,7 @@ class OMP(InferenceMethod):
         Parameters
         ----------
         sparsity : scalar (1,)
-            sparsity of the solution        
+            sparsity of the solution
         return_all_coefficients : string (1,) default=False
             returns all coefficients during inference procedure if True
             user beware: if n_iter is large, setting this parameter to True
