@@ -966,23 +966,24 @@ class CEL0(InferenceMethod):
         self.return_all_coefficients = return_all_coefficients
 
 
-    def CEL0Thresholding(self,u):
+    def threshold_nonlinearity(self, u, a=1):
         '''
-        CEL0 thresholding function: from 
+        CEL0 thresholding function: A continuous exact l0 penalty
 
         Parameters
         ----------
         u : array-like, shape [batch_size, n_basis]
+        a : the norm of the column of the dictionary, default=1
 
         Returns
         -------
         re : array-like, shape [batch_size, n_basis]
 
         '''
-        a = 1
-        num = (np.abs(u) - math.sqrt(2*self.threshold)*a*self.coeff_lr)
+        num = (np.abs(u) - torch.sqrt(2*self.threshold)*a*self.coeff_lr)
         num[num<0] = 0
         den = 1-a**2*self.coeff_lr
+
         re = np.sign(u)*np.minimum(np.abs(u),np.divide(num,den))*(a**2*self.coeff_lr<1)
         return re
 
@@ -1021,9 +1022,7 @@ class CEL0(InferenceMethod):
             u = torch.zeros((batch_size, n_basis)).to(device)
 
         coefficients = torch.zeros((batch_size, 0, n_basis)).to(device)
-
-        b = (dictionary.t()@data.t()).t()
-        G = dictionary.t()@dictionary-torch.eye(n_basis).to(device)
+        dictionary_norms = torch.norm(dictionary, p=2, dim=0, keepdim=True).squeeze()[0]
 
         for i in range(self.n_iter):
             # check return all
@@ -1036,9 +1035,14 @@ class CEL0(InferenceMethod):
                         [coefficients, u.clone().unsqueeze(1)], dim=1)
 
             # compute new
-            a = self.CEL0Thresholding(u)
-            du = b-u-(G@a.t()).t()
-            u = u + self.coeff_lr*du
+            # Step 1: Gradient descent on u
+            recon = u @ dictionary.T
+            residual = data - recon
+            dLda = residual @ dictionary
+            u = u + self.coeff_lr * dLda
+
+            # Step 2: Thresholding
+            u = self.threshold_nonlinearity(u)
 
             if use_checknan:
                 self.checknan(u, "coefficients")
@@ -1047,7 +1051,7 @@ class CEL0(InferenceMethod):
         if self.return_all_coefficients == "active":
             coefficients = torch.concat([coefficients, u.clone().unsqueeze(1)], dim=1)
         else:
-            final_coefficients = self.CEL0Thresholding(u)
+            final_coefficients = u
             coefficients = torch.concat([coefficients, final_coefficients.clone().unsqueeze(1)], dim=1)
 
         return coefficients.squeeze()
