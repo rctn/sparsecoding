@@ -983,7 +983,7 @@ class CEL0(InferenceMethod):
         num = (np.abs(u) - torch.sqrt(2 * self.threshold) * a * self.coeff_lr)
         num[num < 0] = 0
         den = 1-a ** 2 * self.coeff_lr
-        re = np.sign(u) * np.minimum(np.abs(u), np.divide(num, den)) * (a ** 2 * self.coeff_lr<1)
+        re = np.sign(u) * np.minimum(np.abs(u), np.divide(num, den)) * (a ** 2 * self.coeff_lr < 1)
         return re
 
     def infer(self, data, dictionary, coeff_0=None, use_checknan=False):
