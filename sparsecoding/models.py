@@ -7,7 +7,7 @@ import pickle as pkl
 class SparseCoding(torch.nn.Module):
 
     def __init__(self, inference_method, n_basis, n_features,
-                 sparsity_penalty=0.2, device=None, **kwargs):
+                 sparsity_penalty=0.2, device=None, check_for_dictionary_nan=False, **kwargs):
         """Class for learning a sparse code via dictionary learning
 
         Parameters
@@ -25,11 +25,16 @@ class SparseCoding(torch.nn.Module):
             Learning rate of dictionary update
         device : torch.device, default=torch.device("cpu")
             Which device to utilize
+        check_for_dictionary_nan : bool, default=False
+            Flag to check for nans in the dictionary after gradient 
+            updates and normalizations. Raises ValueError if nan 
+            found 
         """
         super(SparseCoding, self).__init__()
         self.inference_method = inference_method
         self.n_basis = n_basis
         self.n_features = n_features
+        self.check_for_dictionary_nan = check_for_dictionary_nan
         self.device = torch.device("cpu") if device is None else device
         self.dictionary_lr = torch.tensor(np.float32(kwargs.pop("dictionary_lr", 1e-2))).to(self.device)
         self.sparsity_penalty = torch.tensor(np.float32(sparsity_penalty)).to(self.device)
@@ -69,12 +74,14 @@ class SparseCoding(torch.nn.Module):
         dictionary_grad = self.compute_grad_dict(data, a)
         self.dictionary = torch.add(self.dictionary,
                                     self.dictionary_lr*dictionary_grad)
-        self.checknan()
+        if self.check_for_dictionary_nan:
+            self.checknan()
 
     def normalize_dictionary(self):
         """Normalize columns of dictionary matrix to unit norm."""
         self.dictionary = self.dictionary.div_(self.dictionary.norm(p=2, dim=0))
-        self.checknan()
+        if self.check_for_dictionary_nan:
+            self.checknan()
 
     def learn_dictionary(self, dataset, n_epoch, batch_size):
         """Learn dictionary for n_epoch epochs
