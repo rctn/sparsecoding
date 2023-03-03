@@ -980,10 +980,10 @@ class CEL0(InferenceMethod):
         re : array-like, shape [batch_size, n_basis]
 
         '''
-        num = (np.abs(u) - torch.sqrt(2*self.threshold)*a*self.coeff_lr)
-        num[num<0] = 0
-        den = 1-a**2*self.coeff_lr
-        re = np.sign(u)*np.minimum(np.abs(u),np.divide(num,den))*(a**2*self.coeff_lr<1)
+        num = (np.abs(u) - torch.sqrt(2 * self.threshold) * a * self.coeff_lr)
+        num[num < 0] = 0
+        den = 1-a ** 2 * self.coeff_lr
+        re = np.sign(u) * np.minimum(np.abs(u), np.divide(num, den)) * (a ** 2 * self.coeff_lr<1)
         return re
 
     def infer(self, data, dictionary, coeff_0=None, use_checknan=False):
@@ -1021,7 +1021,7 @@ class CEL0(InferenceMethod):
 
         coefficients = torch.zeros((batch_size, 0, n_basis)).to(device)
         dictionary_norms = torch.norm(dictionary, dim=0, keepdim=True).squeeze()[0]
-        assert dictionary_norms==1, "Dictionary must be normalized"
+        assert dictionary_norms == 1, "Dictionary must be normalized"
 
         for i in range(self.n_iter):
             # check return all
@@ -1054,4 +1054,3 @@ class CEL0(InferenceMethod):
             coefficients = torch.concat([coefficients, final_coefficients.clone().unsqueeze(1)], dim=1)
 
         return coefficients.squeeze()
-
