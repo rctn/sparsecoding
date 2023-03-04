@@ -963,6 +963,7 @@ class CEL0(InferenceMethod):
         self.coeff_lr = coeff_lr
         self.n_iter = n_iter
         self.return_all_coefficients = return_all_coefficients
+        self.dictionary_norms = None
 
     def threshold_nonlinearity(self, u, a=1):
         '''
@@ -980,11 +981,16 @@ class CEL0(InferenceMethod):
         re : array-like, shape [batch_size, n_basis]
 
         '''
-        num = (np.abs(u) - torch.sqrt(2 * self.threshold) * a * self.coeff_lr)
-        num[num < 0] = 0
-        den = 1-a ** 2 * self.coeff_lr
-        re = np.sign(u) * np.minimum(np.abs(u), np.divide(num, den)) * (a ** 2 * self.coeff_lr < 1)
-        return re
+        if a * self.coeff_lr < 1:
+            num = (np.abs(u) - torch.sqrt(2 * self.threshold) * a * self.coeff_lr)
+            num[num < 0] = 0
+            den = 1 - a ** 2 * self.coeff_lr
+            re = np.sign(u) * np.minimum(np.abs(u), np.divide(num, den)) # * (a ** 2 * self.coeff_lr < 1)
+            return re
+        else:
+            # TODO: This is not the same as the paper
+            re = u[np.abs(u) < torch.sqrt(2 * self.threshold * self.coeff_lr)] + u[np.abs(u) == torch.sqrt(2 * self.threshold * self.coeff_lr)]
+            return re
 
     def infer(self, data, dictionary, coeff_0=None, use_checknan=False):
         """Infer coefficients using provided dictionary
@@ -1020,8 +1026,9 @@ class CEL0(InferenceMethod):
             u = torch.zeros((batch_size, n_basis)).to(device)
 
         coefficients = torch.zeros((batch_size, 0, n_basis)).to(device)
-        dictionary_norms = torch.norm(dictionary, dim=0, keepdim=True).squeeze()[0]
-        assert dictionary_norms == 1, "Dictionary must be normalized"
+
+        self.dictionary_norms = torch.norm(dictionary, dim=0, keepdim=True).squeeze()[0]
+        assert self.dictionary_norms == 1, "Dictionary must be normalized"
 
         for i in range(self.n_iter):
             # check return all
