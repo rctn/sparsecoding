@@ -989,9 +989,9 @@ class CEL0(InferenceMethod):
             return re
         else:
             # TODO: This is not the same as the paper
-            l = u[np.abs(u) < torch.sqrt(2 * self.threshold * self.coeff_lr)] 
-            r = u[np.abs(u) == torch.sqrt(2 * self.threshold * self.coeff_lr)]
-            re = l + r
+            larger = u[np.abs(u) < torch.sqrt(2 * self.threshold * self.coeff_lr)]
+            equal = u[np.abs(u) == torch.sqrt(2 * self.threshold * self.coeff_lr)]
+            re = larger + equal
             return re
 
     def infer(self, data, dictionary, coeff_0=None, use_checknan=False):
