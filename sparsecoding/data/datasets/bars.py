@@ -48,7 +48,7 @@ class BarsDataset(Dataset):
         v_bars = v_bars.expand(self.P, self.P, self.P)
         self.basis = torch.cat((h_bars, v_bars), dim=0)  # [2*P, P, P]
 
-        self.weights = prior.sample(self.N)  # [N, 2*P]
+        self.weights = prior.sample([self.N])  # [N, 2*P]
 
         self.data = torch.einsum(
             "nd,dhw->nhw",
