@@ -1,3 +1,4 @@
+from collections import defaultdict
 import numpy as np
 import torch
 
@@ -407,7 +408,7 @@ class ISTA(InferenceMethod):
         a = torch.sign(u)*a
         return a
 
-    def infer(self, data, dictionary, coeff_0=None, use_checknan=False):
+    def infer(self, data, dictionary, coeff_0=None, use_checknan=False, debug=False):
         """Infer coefficients for each image in data using dictionary elements.
         Uses ISTA (Beck & Taboulle 2009), equations 1.4 and 1.5.
 
@@ -434,12 +435,16 @@ class ISTA(InferenceMethod):
         n_basis = dictionary.shape[1]
         device = dictionary.device
 
+        if debug:
+            metrics = defaultdict(list)
+
         # Calculate stepsize based on largest eigenvalue of
         # dictionary.T @ dictionary.
-        lipschitz_constant = torch.linalg.eigvalsh(
-            torch.mm(dictionary.T, dictionary))[-1]
-        stepsize = 1. / lipschitz_constant
-        self.threshold = stepsize * self.sparsity_penalty
+        with torch.no_grad():
+            lipschitz_constant = torch.linalg.eigvalsh(
+                torch.mm(dictionary.T, dictionary))[-1]
+            stepsize = 1. / lipschitz_constant
+            self.threshold = stepsize * self.sparsity_penalty
 
         # Initialize coefficients.
         if coeff_0 is not None:
@@ -458,7 +463,7 @@ class ISTA(InferenceMethod):
                 coefficients = torch.concat([coefficients,
                                              self.threshold_nonlinearity(u).clone().unsqueeze(1)], dim=1)
 
-            u -= stepsize * torch.mm(residual, dictionary)
+            u = u - stepsize * torch.mm(residual, dictionary)
             self.coefficients = self.threshold_nonlinearity(u)
 
             if self.stop_early:
@@ -474,13 +479,21 @@ class ISTA(InferenceMethod):
             if use_checknan:
                 self.checknan(u, "coefficients")
 
+            if debug:
+                metrics["l1"].append(self.coefficients.abs().mean().item())
+                metrics["l0"].append((self.coefficients.abs() > 1e-8).type(torch.FloatTensor).mean().item())
+                metrics["rec"].append((residual**2).mean().item())
+
         coefficients = torch.concat([coefficients, self.coefficients.clone().unsqueeze(1)], dim=1)
-        return torch.squeeze(coefficients)
+
+        if debug:
+            return torch.squeeze(coefficients), metrics
+        return torch.squeeze(coefficients), None
 
 
 class LSM(InferenceMethod):
     def __init__(self, n_iter=100, n_iter_LSM=6, beta=0.01, alpha=80.0,
-                 sigma=0.005, sparse_threshold=10**-2, solver=None,
+                 sigma=0.005, sparse_threshold=1e-2, solver=None,
                  return_all_coefficients=False):
         """Infer latent coefficients generating data given dictionary.
         Method implemented according to "Group Sparse Coding with a Laplacian
