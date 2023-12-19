@@ -26,9 +26,9 @@ class SparseCoding(torch.nn.Module):
         device : torch.device, default=torch.device("cpu")
             Which device to utilize
         check_for_dictionary_nan : bool, default=False
-            Flag to check for nans in the dictionary after gradient 
-            updates and normalizations. Raises ValueError if nan 
-            found 
+            Flag to check for nans in the dictionary after gradient
+            updates and normalizations. Raises ValueError if nan
+            found
         """
         super(SparseCoding, self).__init__()
         self.inference_method = inference_method

@@ -145,7 +145,7 @@ def create_patches(imgs, epochs, batch_size, N, rng):
     patches : Tensor of size (epochs, batch_size, pixels_per_patch).
     """
     # TODO: use rng here when sample_random_patches supports it.
-    patches = sample_random_patches(int(np.sqrt(N)), batch_size*epochs, 
+    patches = sample_random_patches(int(np.sqrt(N)), batch_size*epochs,
                                     torch.unsqueeze(imgs, 1))
     patches = patches.reshape(epochs, batch_size, N)
     return patches
