@@ -42,5 +42,6 @@ class TestWhitener(unittest.TestCase):
             whitener.whiten(data),
         )), "If an eigenvalue is 0, should not get NaNs."
 
+
 if __name__ == "__main__":
     unittest.main()
