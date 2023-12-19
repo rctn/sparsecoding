@@ -25,13 +25,17 @@ class Whitener(object):
         Eigenvalues of `self.covariance`.
     eigenvectors : Tensor, shape [D, D]
         Eigenvectors of `self.covariance`.
+    epsilon : float
+        Prevents division by zero.
     """
 
     def __init__(
         self,
         data,
+        epsilon=1e-10,
     ):
         self.D = data.shape[1]
+        self.epsilon = epsilon
 
         with torch.no_grad():
             data = data.T  # [D, N]
@@ -83,7 +87,7 @@ class Whitener(object):
 
         whitened_data = (
             self.eigenvectors
-            @ torch.diag(1. / torch.sqrt(self.eigenvalues))
+            @ torch.diag(1. / torch.sqrt(self.eigenvalues + self.epsilon))
             @ self.eigenvectors.T
             @ centered_data
         )  # [D, N]
@@ -124,7 +128,7 @@ class Whitener(object):
 
         unwhitened_data = (
             self.eigenvectors
-            @ torch.diag(torch.sqrt(self.eigenvalues))
+            @ torch.diag(torch.sqrt(self.eigenvalues + self.epsilon))
             @ self.eigenvectors.T
             @ whitened_data
         ) + self.mean.reshape(self.D, 1)  # [D, N]
