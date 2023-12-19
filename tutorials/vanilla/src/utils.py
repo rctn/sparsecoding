@@ -119,8 +119,7 @@ def display_sbs(orig, recon, title=None, bar=True, cmap="gray", dpi=150,
     plt.subplot(1, 2, 1)
     plt.title("original")
     plt.axis("off")
-    # plt.imshow(orig, cmap=cmap, vmin=vmin, vmax=vmax)
-    plt.imshow(orig, cmap=cmap)
+    plt.imshow(orig, cmap=cmap, vmin=vmin, vmax=vmax)
     if bar:
         plt.colorbar()
 
