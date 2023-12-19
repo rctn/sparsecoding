@@ -93,8 +93,7 @@ def display(img, title=None, bar=True, cmap="gray", dpi=150, vrange=None):
     plt.show()
 
 
-def display_sbs(orig, recon, title=None, bar=True, cmap="gray", dpi=150, 
-                vrange=None):
+def display_sbs(orig, recon, title=None, bar=True, cmap="gray", dpi=150):
     """Display two images side-by-side in Jupyter notebook.
 
     Parameters
@@ -107,19 +106,12 @@ def display_sbs(orig, recon, title=None, bar=True, cmap="gray", dpi=150,
     bar : Whether to show color bar on the side. Optional; default True.
     cmap : Color map. Optional; default 'gray'.
     dpi : Controls size. Optional; default 150.
-    vrange : Tuple (value_min, value_max). Optional (will set automatically).
     """
-    if vrange:
-        vmin = vrange[0]
-        vmax = vrange[1]
-    else:
-        vmin = torch.min(torch.min(orig), torch.min(recon))
-        vmax = torch.max(torch.max(orig), torch.max(recon))
 
     plt.subplot(1, 2, 1)
     plt.title("original")
     plt.axis("off")
-    plt.imshow(orig, cmap=cmap, vmin=vmin, vmax=vmax)
+    plt.imshow(orig, cmap=cmap)
     if bar:
         plt.colorbar()
 
