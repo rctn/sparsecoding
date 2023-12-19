@@ -34,6 +34,13 @@ class TestWhitener(unittest.TestCase):
             atol=1e-3
         ), "Unwhitened data should be equal to input data."
 
+    def test_zero_div(self):
+        data = torch.Tensor([[1, 0], [2, 0]])
+        whitener = Whitener(data)
+
+        assert not torch.any(torch.isnan(
+            whitener.whiten(data),
+        )), "If an eigenvalue is 0, should not get NaNs."
 
 if __name__ == "__main__":
     unittest.main()
