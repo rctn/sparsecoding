@@ -21,6 +21,9 @@ class FieldDataset(Dataset):
         Location to download the dataset to.
     patch_size : int
         Side length of patches for sparse dictionary learning.
+    stride : int, optional
+        Stride for sampling patches. If not specified, set to `patch_size` 
+        (non-overlapping patches).
     """
 
     B = 10
@@ -32,8 +35,11 @@ class FieldDataset(Dataset):
         self,
         root: str,
         patch_size: int = 8,
+        stride: int = None,
     ):
         self.P = patch_size
+        if stride is None:
+            stride = patch_size
 
         root = os.path.expanduser(root)
         os.system(f"mkdir -p {root}")
@@ -47,7 +53,7 @@ class FieldDataset(Dataset):
         self.images = torch.permute(self.images, (2, 0, 1))  # [B, H, W]
         self.images = torch.reshape(self.images, (self.B, self.C, self.H, self.W))  # [B, C, H, W]
 
-        self.patches = patchify(patch_size, self.images)  # [B, N, C, P, P]
+        self.patches = patchify(patch_size, self.images, stride)  # [B, N, C, P, P]
         self.patches = torch.reshape(self.patches, (-1, self.C, self.P, self.P))  # [B*N, C, P, P]
 
     def __len__(self):

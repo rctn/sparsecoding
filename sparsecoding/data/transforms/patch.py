@@ -65,6 +65,7 @@ def sample_random_patches(
 def patchify(
     patch_size: int,
     image: torch.Tensor,
+    stride: int = None,
 ):
     """Break an image into square patches.
 
@@ -79,6 +80,9 @@ def patchify(
             C is the number of channels,
             H is the image height,
             W is the image width.
+    stride : int, optional 
+        Stride between patches in pixel space. If not specified, set to 
+        `patch_size` (non-overlapping patches).
 
     Returns
     -------
@@ -92,6 +96,8 @@ def patchify(
     leading_dims = image.shape[:-3]
     C, H, W = image.shape[-3:]
     P = patch_size
+    if stride is None:
+        stride = P
 
     if (
         H % P != 0
@@ -104,14 +110,14 @@ def patchify(
         )
 
     N = (
-        int(H / P)
-        * int(W / P)
+        int((H - P + 1 + stride) // stride)
+        * int((W - P + 1 + stride) // stride)
     )
 
     patches = torch.nn.functional.unfold(
         input=image.reshape(-1, C, H, W),
         kernel_size=P,
-        stride=P,
+        stride=stride,
     )  # [prod(*), C*P*P, N]
     patches = torch.permute(patches, (0, 2, 1))  # [prod(*), N, C*P*P]
 
