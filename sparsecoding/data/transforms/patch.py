@@ -80,8 +80,8 @@ def patchify(
             C is the number of channels,
             H is the image height,
             W is the image width.
-    stride : int, optional
-        Stride between patches in pixel space. If not specified, set to
+    stride : int, optional 
+        Stride between patches in pixel space. If not specified, set to 
         `patch_size` (non-overlapping patches).
 
     Returns
