@@ -93,7 +93,8 @@ def display(img, title=None, bar=True, cmap="gray", dpi=150, vrange=None):
     plt.show()
 
 
-def display_sbs(orig, recon, title=None, bar=True, cmap="gray", dpi=150, vrange=None):
+def display_sbs(orig, recon, title=None, bar=True, cmap="gray", dpi=150, 
+                vrange=None):
     """Display two images side-by-side in Jupyter notebook.
 
     Parameters
@@ -118,14 +119,15 @@ def display_sbs(orig, recon, title=None, bar=True, cmap="gray", dpi=150, vrange=
     plt.subplot(1, 2, 1)
     plt.title("original")
     plt.axis("off")
-    plt.imshow(orig, cmap=cmap, vmin=vmin, vmax=vmax)
+    # plt.imshow(orig, cmap=cmap, vmin=vmin, vmax=vmax)
+    plt.imshow(orig, cmap=cmap)
     if bar:
         plt.colorbar()
 
     plt.subplot(1, 2, 2)
     plt.title("reconstructed")
     plt.axis("off")
-    plt.imshow(orig, cmap=cmap, vmin=vmin, vmax=vmax)
+    plt.imshow(recon, cmap=cmap)
     if bar:
         plt.colorbar()
 
@@ -152,19 +154,24 @@ def create_patches(imgs, epochs, batch_size, N, rng):
     patches : Tensor of size (epochs, batch_size, pixels_per_patch).
     """
     # TODO: use rng here when sample_random_patches supports it.
-    patches = sample_random_patches(int(np.sqrt(N)), batch_size*epochs, torch.unsqueeze(imgs, 1))
+    patches = sample_random_patches(int(np.sqrt(N)), batch_size*epochs, 
+                                    torch.unsqueeze(imgs, 1))
     patches = patches.reshape(epochs, batch_size, N)
     return patches
 
 
 def load_data(img_path):
     """If whitened images have not been downloaded, download (~20MB).
+    Also normalize images to mean 0 and variance 1.
 
     Returns
     -------
     imgs : Tensor of (num_imgs, height, width).
     """
-    imgs = sio.loadmat(img_path)["IMAGES"]
+    imgs = sio.loadmat(img_path)["IMAGES"]  # (512, 512, 10)
+    # normalize to mean 0 var 1
+    imgs = (imgs - np.mean(imgs, axis=(0, 1), keepdims=True)) / np.std(
+        imgs, axis=(0, 1), keepdims=True)
     return torch.Tensor(imgs).permute(2, 0, 1)
 
 
@@ -246,7 +253,7 @@ def show_components(phi, a, dpi):
     """
     patch_size = int(np.sqrt(a.shape[0]))
     order = torch.flip(np.argsort(np.abs(a)), dims=[0])
-    a = a[order]
+    a = a[order].unsqueeze(1)
     phi = phi[:, order]
 
     weighted_phi = (phi * a.T).T
