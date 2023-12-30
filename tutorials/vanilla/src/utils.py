@@ -242,7 +242,7 @@ def show_components(phi, a, dpi):
 
     phi is entire dictionary. a is coefficients of one patch.
     """
-    patch_size = int(np.sqrt(a.shape[0]))
+    patch_size = int(np.sqrt(phi.shape[0]))
     order = torch.flip(np.argsort(np.abs(a)), dims=[0])
     a = a[order].unsqueeze(1)
     phi = phi[:, order]
@@ -250,9 +250,8 @@ def show_components(phi, a, dpi):
     weighted_phi = (phi * a.T).T
     weighted_phi = weighted_phi.reshape(
         -1, 1, patch_size, patch_size)
-    grid = weighted_phi
-    components = make_grid(grid, ncol=int(
-        np.sqrt(a.shape[0])), padding=1, pad_value=-1)[0]
+    components = make_grid(weighted_phi, ncol=int(np.sqrt(a.shape[0])),
+                           padding=1, pad_value=-1)[0]
 
     vmax = torch.max(weighted_phi)
     vmin = torch.min(weighted_phi)
