@@ -22,7 +22,7 @@ class FieldDataset(Dataset):
     patch_size : int
         Side length of patches for sparse dictionary learning.
     stride : int, optional
-        Stride for sampling patches. If not specified, set to `patch_size` 
+        Stride for sampling patches. If not specified, set to `patch_size`
         (non-overlapping patches).
     """
 
