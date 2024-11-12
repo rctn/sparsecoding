@@ -77,7 +77,7 @@ class InferenceMethod:
 class LCA(InferenceMethod):
     def __init__(self, n_iter=100, coeff_lr=1e-3, threshold=0.1,
                  stop_early=False, epsilon=1e-2, solver=None,
-                 return_all_coefficients="none"):
+                 return_all_coefficients="none", nonnegative=False):
         """Method implemented according locally competative algorithm (LCA)
         with the ideal soft thresholding function.
 
@@ -93,6 +93,8 @@ class LCA(InferenceMethod):
             Stops dynamics early based on change in coefficents
         epsilon : float, default=1e-2
             Only used if stop_early True, specifies criteria to stop dynamics
+        nonnegative : bool, default=False
+            Constrain coefficients to be nonnegative
         return_all_coefficients : str, {"none", "membrane", "active"}, default="none"
             Returns all coefficients during inference procedure if not equal
             to "none". If return_all_coefficients=="membrane", membrane
@@ -115,6 +117,7 @@ class LCA(InferenceMethod):
         self.stop_early = stop_early
         self.epsilon = epsilon
         self.n_iter = n_iter
+        self.nonnegative = nonnegative
         if return_all_coefficients not in ["none", "membrane", "active"]:
             raise ValueError("Invalid input for return_all_coefficients. Valid"
                              "inputs are: \"none\", \"membrane\", \"active\".")
@@ -133,8 +136,11 @@ class LCA(InferenceMethod):
         a : array-like, shape [batch_size, n_basis]
             Activations
         """
-        a = (torch.abs(u) - self.threshold).clamp(min=0.)
-        a = torch.sign(u)*a
+        if self.nonnegative:
+            a = (u - self.threshold).clamp(min=0.)
+        else:
+            a = (torch.abs(u) - self.threshold).clamp(min=0.)
+            a = torch.sign(u)*a    
         return a
 
     def grad(self, b, G, u, a):
