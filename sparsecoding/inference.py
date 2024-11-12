@@ -140,7 +140,7 @@ class LCA(InferenceMethod):
             a = (u - self.threshold).clamp(min=0.)
         else:
             a = (torch.abs(u) - self.threshold).clamp(min=0.)
-            a = torch.sign(u)*a    
+            a = torch.sign(u)*a
         return a
 
     def grad(self, b, G, u, a):
