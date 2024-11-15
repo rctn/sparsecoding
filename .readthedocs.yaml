@@ -7,6 +7,7 @@ build:
   jobs:
     post_install:
       - sphinx-apidoc -o docs sparsecoding
+      - pip install -r requirements.txt
 
 sphinx:
   configuration: docs/conf.py
