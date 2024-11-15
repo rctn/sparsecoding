@@ -4,6 +4,9 @@ build:
   os: ubuntu-24.04
   tools:
       python: "3"
+  jobs:
+    post_install:
+      - sphinx-apidoc -o docs sparsecoding
 
 sphinx:
   configuration: docs/conf.py
