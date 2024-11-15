@@ -12,10 +12,5 @@ documentation for details.
 
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-   sparsecoding
-   sparsecoding.data
-   sparsecoding.priors
-   modules
 
+   api
