@@ -2,7 +2,50 @@ import torch
 import torch.fft as fft
 from typing import Dict, Optional
 from functools import lru_cache
-from whiten import whiten
+from .whiten import whiten, compute_whitening_stats
+
+
+def check_images(images):
+    """Verify that tensor is in the shape [N, C, H, W] and C = 1   
+    """
+
+    if len(images.shape) != 4:
+        raise ValueError('Images must be in shape [N, C, H, W]')
+    if images.shape[1] != 1:
+        raise ValueError(f'Images must be grayscale, received {images.shape[1]} channels')
+
+
+def whiten_images(images: torch.Tensor,
+                  algorithm: str,
+                  stats: Dict = None,
+                  **kwargs) -> torch.Tensor:
+    """
+    Wrapper for all whitening transformations
+
+    Args:
+        images: tensor of shape (N, C, H, W)
+        algorithm: what whitening transform we want to use
+        stats: dictionary of dataset statistics needed for whitening transformations
+    """
+
+    check_images(images)
+
+    if algorithm == 'frequency':
+        return frequency_whitening(images, **kwargs)
+    elif algorithm == 'pca' or algorithm == 'zca' or algorithm == 'cholesky':
+        flattened_images = images.flatten(start_dim=1)
+        return whiten(flattened_images, algorithm, stats, **kwargs)
+    else:
+        raise ValueError(f"Unknown whitening algorithm: {algorithm}, \
+                          must be one of ['frequency', 'pca', 'zca', 'cholesky]")
+    
+
+def compute_image_whitening_stats(images: torch.Tensor,
+                                  algorithm: str = 'zca',
+                                  n_components=None) -> Dict:
+    check_images(images)
+    flattened_images = images.flatten(start_dim=1)
+    return compute_whitening_stats(flattened_images, algorithm, n_components)
 
 
 def create_frequency_filter(image_size: int, f0_factor: float = 0.4) -> torch.Tensor:
@@ -94,7 +137,7 @@ def whiten_channel(
     # Normalize variance
     whitened = whitened - whitened.mean()
     variance = torch.var(whitened)
-    if variance > 0:  
+    if variance > 0:
         scale_factor = torch.sqrt(torch.tensor(target_variance) / variance)
         whitened = whitened * scale_factor
 
@@ -119,9 +162,7 @@ def frequency_whitening(
     Returns:
         torch.Tensor: Whitened images
     """
-    # TODO change to only work for greyscale images
-
-    N, C, H, W = images.shape
+    _, _, H, W = images.shape
     if H != W:
         raise ValueError("Images must be square")
     
@@ -131,37 +172,14 @@ def frequency_whitening(
     # Process each image in the batch
     whitened_batch = []
     for img in images:
-        whitened_channels = [
-            whiten_channel(img[c], filt, target_variance)
-            for c in range(C)
-        ]
-        whitened_batch.append(torch.stack(whitened_channels))
+        whitened_batch.append(
+            whiten_channel(img[0], filt, target_variance)
+        )
     
     return torch.stack(whitened_batch)
 
 
-def whiten_images(images: torch.Tensor,
-                  algorithm: str,
-                  stats: Dict = None,
-                  **kwargs) -> torch.Tensor:
-    """
-    Wrapper for all whitening transformations
 
-    Args:
-        images: tensor of shape (N, C, H, W)
-        algorithm: what whitening transform we want to use
-        stats: dictionary of dataset statistics needed for whitening transformations
-    """
-
-    if algorithm == 'frequency':
-        return frequency_whitening(images, **kwargs)
-    elif algorithm == 'pca' or algorithm == 'zca' or algorithm == 'cholesky':
-        flattened_images = images.flatten(start_dim=1)
-        return whiten(flattened_images, algorithm, stats, **kwargs)
-    else:
-        raise ValueError(f"Unknown whitening algorithm: {algorithm}, \
-                          must be one of ['frequency', 'pca', 'zca', 'cholesky]")
-    
 
 class WhiteningTransform(object):
     """
