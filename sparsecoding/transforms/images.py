@@ -32,9 +32,17 @@ def whiten_images(images: torch.Tensor,
 
     if algorithm == 'frequency':
         return frequency_whitening(images, **kwargs)
-    elif algorithm == 'pca' or algorithm == 'zca' or algorithm == 'cholesky':
+    
+    elif algorithm == 'pca':
         flattened_images = images.flatten(start_dim=1)
         return whiten(flattened_images, algorithm, stats, **kwargs)
+    
+    elif algorithm == 'zca' or algorithm == 'cholesky':
+        N, C, H, W = images.shape
+        flattened_images = images.flatten(start_dim=1)
+        whitened = whiten(flattened_images, algorithm, stats, **kwargs)
+        return whitened.reshape((N, C, H, W))
+
     else:
         raise ValueError(f"Unknown whitening algorithm: {algorithm}, \
                           must be one of ['frequency', 'pca', 'zca', 'cholesky]")
@@ -176,7 +184,7 @@ def frequency_whitening(
             whiten_channel(img[0], filt, target_variance)
         )
     
-    return torch.stack(whitened_batch)
+    return torch.stack(whitened_batch).unsqueeze(1)
 
 
 
