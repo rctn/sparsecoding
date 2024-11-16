@@ -1,7 +1,7 @@
 import torch
 import unittest
 
-from data.transforms.patch import sample_random_patches, patchify, quilt
+from transforms.patch import sample_random_patches, patchify, quilt
 
 
 class TestPatcher(unittest.TestCase):
