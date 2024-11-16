@@ -12,5 +12,4 @@ documentation for details.
 
 
 .. toctree::
-
    api
