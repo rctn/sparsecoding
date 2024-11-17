@@ -32,12 +32,8 @@ def whiten_images(images: torch.Tensor,
 
     if algorithm == 'frequency':
         return frequency_whitening(images, **kwargs)
-    
-    elif algorithm == 'pca':
-        flattened_images = images.flatten(start_dim=1)
-        return whiten(flattened_images, algorithm, stats, **kwargs)
-    
-    elif algorithm == 'zca' or algorithm == 'cholesky':
+
+    elif algorithm in ['zca', 'pca', 'cholesky']:
         N, C, H, W = images.shape
         flattened_images = images.flatten(start_dim=1)
         whitened = whiten(flattened_images, algorithm, stats, **kwargs)
@@ -76,6 +72,7 @@ def create_frequency_filter(image_size: int, f0_factor: float = 0.4) -> torch.Te
     filt = rho * torch.exp(-(rho/f_0)**4)
     
     return fft.fftshift(filt)
+
 
 @lru_cache(maxsize=32)
 def get_cached_filter(image_size: int, f0_factor: float = 0.4) -> torch.Tensor:
@@ -187,8 +184,6 @@ def frequency_whitening(
     return torch.stack(whitened_batch).unsqueeze(1)
 
 
-
-
 class WhiteningTransform(object):
     """
     A PyTorch transform for image whitening that can be used in a transform pipeline.
@@ -232,6 +227,7 @@ class WhiteningTransform(object):
         else:
             single_image = False
 
+        check_images(images)
         # Apply whitening
         whitened = whiten(
             images,
