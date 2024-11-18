@@ -26,8 +26,6 @@ class TestWhitener(unittest.TestCase):
             atol=1e-3,
         ), "Whitened data should have unit (identity) covariance."
 
-    
-
 
 if __name__ == "__main__":
     unittest.main()

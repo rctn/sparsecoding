@@ -45,11 +45,10 @@ def whiten_images(images: torch.Tensor,
     
 
 def compute_image_whitening_stats(images: torch.Tensor,
-                                  algorithm: str = 'zca',
                                   n_components=None) -> Dict:
     check_images(images)
     flattened_images = images.flatten(start_dim=1)
-    return compute_whitening_stats(flattened_images, algorithm, n_components)
+    return compute_whitening_stats(flattened_images, n_components)
 
 
 def create_frequency_filter(image_size: int, f0_factor: float = 0.4) -> torch.Tensor:
