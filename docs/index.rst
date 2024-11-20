@@ -3,10 +3,21 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-###########################################
-Welcome to the RCTN sparsecoding repository 
-###########################################
+#######################################
+RCTN sparsecoding library documentation
+#######################################
 
+`sparsecoding`_ is a python library developed by the `Redwood Center for 
+Theoretical Neuroscience <https://redwood.berkeley.edu>`_ which contains 
+performant `pytorch <https://github.com/pytorch/pytorch>`_ implementations of sparse coding dictionary learning, 
+inference, and data processing. It was written to be a useful research tool 
+for applying various sparse coding methods to data. 
+
+We believe that sharing code within the scientific community is an important 
+part of science and we hope that the research community finds this library 
+useful. 
+
+.. _sparsecoding: https://github.com/rctn/sparsecoding/
 
 .. toctree::
    :maxdepth: 1
