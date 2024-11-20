@@ -12,4 +12,7 @@ Welcome to the RCTN sparsecoding repository
    :maxdepth: 1
    :numbered:
 
+   install
+   quickstart
    api
+   contributing
