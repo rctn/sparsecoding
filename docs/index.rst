@@ -27,3 +27,9 @@ useful.
    quickstart
    api
    contributing
+
+
+License
+-------
+
+`sparsecoding`_ has a BSD-3-clause license, as found in the `LICENSE <https://github.com/rctn/sparsecoding/blob/main/LICENSE>`_ file.
