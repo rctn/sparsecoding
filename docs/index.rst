@@ -8,7 +8,7 @@ RCTN sparsecoding library documentation
 #######################################
 
 `sparsecoding`_ is a python library developed by the `Redwood Center for 
-Theoretical Neuroscience <https://redwood.berkeley.edu>`_ which contains 
+Theoretical Neuroscience (RCTN) <https://redwood.berkeley.edu>`_ which contains 
 performant `pytorch <https://github.com/pytorch/pytorch>`_ implementations of sparse coding dictionary learning, 
 inference, and data processing. It was written to be a useful research tool 
 for applying various sparse coding methods to data. 
