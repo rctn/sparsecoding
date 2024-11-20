@@ -2,10 +2,7 @@
 Installation
 ============
 
-Basic
------
-
-The fastest way to install is by cloning the code from Github:
+The fastest way to install is by cloning the library from Github:
 
 .. code:: bash
 
