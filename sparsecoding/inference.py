@@ -856,8 +856,8 @@ class OMP(InferenceMethod):
     """
     Infer coefficients for each image in data using elements dictionary.
     Method description can be traced to:
-        "Orthogonal Matching Pursuit: Recursive Function Approximation with Application to Wavelet Decomposition"
-        (Y. Pati & R. Rezaiifar & P. Krishnaprasad, 1993)
+    "Orthogonal Matching Pursuit: Recursive Function Approximation with Application to Wavelet Decomposition"
+    (Y. Pati & R. Rezaiifar & P. Krishnaprasad, 1993)
     """
 
     def __init__(self, sparsity, solver=None, return_all_coefficients=False):
