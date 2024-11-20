@@ -5,14 +5,26 @@ from functools import lru_cache
 from .whiten import whiten, compute_whitening_stats
 
 
-def check_images(images):
-    """Verify that tensor is in the shape [N, C, H, W] and C = 1   
+def check_images(images, algorithm: str = 'zca'):
+    """Verify that tensor is in the shape [N, C, H, W] and C != when using fourier based method 
     """
 
     if len(images.shape) != 4:
         raise ValueError('Images must be in shape [N, C, H, W]')
-    if images.shape[1] != 1:
-        raise ValueError(f'Images must be grayscale, received {images.shape[1]} channels')
+    
+    if images.shape[1] != 1 and algorithm == 'frequency':
+        raise ValueError(f'When using frequency based decorrelation, images must \
+                         be grayscale, received {images.shape[1]} channels')
+    
+    # Running cov based methods on large images can eat memory
+    if algorithm in ['zca', 'pca', 'cholesky'] and (images.shape[2] > 64 or images.shape[3] > 64):
+        print(f'WARNING: Running covaraince based whitening for images of size {images.shape[2]}x{images.shape[3]}. \
+               It is not recommended to use this for images smaller than 64x64')
+        
+    # Running cov based methods on large images can eat memory
+    if algorithm == 'frequency' and (images.shape[2] <= 64 or images.shape[3] <= 64):
+        print(f'WARNING: Running covaraince based whitening for images of size {images.shape[2]}x{images.shape[3]}. \
+               It is recommended to use this for images larger than 64x64')
 
 
 def whiten_images(images: torch.Tensor,
@@ -28,7 +40,7 @@ def whiten_images(images: torch.Tensor,
         stats: dictionary of dataset statistics needed for whitening transformations
     """
 
-    check_images(images)
+    check_images(images, algorithm)
 
     if algorithm == 'frequency':
         return frequency_whitening(images, **kwargs)
@@ -46,7 +58,7 @@ def whiten_images(images: torch.Tensor,
 
 def compute_image_whitening_stats(images: torch.Tensor,
                                   n_components=None) -> Dict:
-    check_images(images)
+    check_images(images, 'stats')
     flattened_images = images.flatten(start_dim=1)
     return compute_whitening_stats(flattened_images, n_components)
 
@@ -88,7 +100,7 @@ def get_cached_filter(image_size: int, f0_factor: float = 0.4) -> torch.Tensor:
     return create_frequency_filter(image_size, f0_factor)
 
 
-def normalize_variance(tensor: torch.Tensor, target_variance: float = 0.1) -> torch.Tensor:
+def normalize_variance(tensor: torch.Tensor, target_variance: float = 1.) -> torch.Tensor:
     """
     Normalize the variance of a tensor to a target value.
     
@@ -99,8 +111,6 @@ def normalize_variance(tensor: torch.Tensor, target_variance: float = 0.1) -> to
     Returns:
         torch.Tensor: Normalized tensor
     """
-    if torch.var(tensor) < 1e-8:
-        return tensor
         
     centered = tensor - tensor.mean()
     current_variance = torch.var(centered)
@@ -114,7 +124,7 @@ def normalize_variance(tensor: torch.Tensor, target_variance: float = 0.1) -> to
 def whiten_channel(
     channel: torch.Tensor,
     filt: torch.Tensor,
-    target_variance: float = 0.1
+    target_variance: float = 1.
 ) -> torch.Tensor:
     """
     Apply frequency domain whitening to a single channel.
@@ -139,11 +149,7 @@ def whiten_channel(
     whitened = torch.real(fft.ifft2(If_whitened))
 
     # Normalize variance
-    whitened = whitened - whitened.mean()
-    variance = torch.var(whitened)
-    if variance > 0:
-        scale_factor = torch.sqrt(torch.tensor(target_variance) / variance)
-        whitened = whitened * scale_factor
+    whitened = normalize_variance(whitened, target_variance)
 
     return whitened
 
