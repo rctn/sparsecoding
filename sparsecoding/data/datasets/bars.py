@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset
 
-from sparsecoding.priors.common import Prior
+from sparsecoding.priors import Prior
 
 
 class BarsDataset(Dataset):
