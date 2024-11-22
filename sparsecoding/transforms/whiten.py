@@ -8,14 +8,16 @@ def compute_whitening_stats(X: torch.Tensor,
     """
     Given a tensor of data, compute statistics for whitening transform.
 
-    Args:
-        X: Input data of size [N, D]
-        n_components: Used for the PCA transform. Number of principal components to keep. If None, keep all components.
-                        If int, keep that many components. If float between 0 and 1,
-                        keep components that explain that fraction of variance.
+    Parameters
+    ----------
+    X: Input data of size [N, D]
+    n_components: Number of principal components to keep. If None, keep all components.
+                  If int, keep that many components. If float between 0 and 1,
+                  keep components that explain that fraction of variance.
 
-    Returns:
-        Dictionary containing whitening statistics
+    Returns
+    ----------
+    Dictionary containing whitening statistics (eigenvalues, eigenvectors, mean)
     """
 
     # Step 1: Center Data
@@ -71,23 +73,26 @@ def whiten(X: torch.Tensor,
     """
     Apply whitening transform to data using pre-computed statistics.
 
+    Parameters
+    ----------
+    X: Input data of shape [N, D] where N are unique data elements of dimensionality D 
+    algorithm: Whitening transform we want to apply, one of ['zca', 'pca', or 'cholesky']
+    stats: Dict containing precomputed whitening statistics (mean, eigenvectors, eigenvalues)
+    n_components: number of components to retain if computing stats
+    epsilon: Optional small constant to prevent division by zero
+
+    Returns
+    ----------
+    Whitened data of shape [N, D]
+
+    Notes
+    ----------
     See https://arxiv.org/abs/1512.00809 for more details on transformations
     - Also gives two additional transforms that have not been implemented
     - Possible TODO
 
     See https://stats.stackexchange.com/questions/117427/what-is-the-difference-between-zca-whitening-and-pca-whitening
     for details on PCA and ZCA in particular
-
-    Args:
-        X: Input data of shape [N, D] where N are unique data elements of dimensionality D 
-        algorithm: Whitening transform we want to apply, one of ['zca', 'pca', or 'cholesky']
-        stats: Dict containing precomputed whitening statistics (mean, eigenvectors, eigenvalues)
-        n_components: number of components to retain if computing stats
-        epsilon: Optional small constant to prevent division by zero
-
-    Returns:
-        Whitened data of shape [N, D] for ZCA and cholesky or [N, D_reduced] for PCA
-        where D_reduced is the number of components kept
     """
 
     if stats is None:

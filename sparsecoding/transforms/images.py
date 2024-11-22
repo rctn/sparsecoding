@@ -5,7 +5,7 @@ from functools import lru_cache
 from .whiten import whiten, compute_whitening_stats
 
 
-def check_images(images, algorithm: str = 'zca'):
+def check_images(images: torch.Tensor, algorithm: str = 'zca'):
     """Verify that tensor is in the shape [N, C, H, W] and C != when using fourier based method 
     """
 
@@ -34,10 +34,15 @@ def whiten_images(images: torch.Tensor,
     """
     Wrapper for all whitening transformations
 
-    Args:
-        images: tensor of shape (N, C, H, W)
-        algorithm: what whitening transform we want to use
-        stats: dictionary of dataset statistics needed for whitening transformations
+    Parameters
+    ----------
+    images: tensor of shape (N, C, H, W)
+    algorithm: what whitening transform we want to use
+    stats: dictionary of dataset statistics needed for whitening transformations
+
+    Returns
+    ----------
+    Tensor of whitened data in shape (N, C, H, W)
     """
 
     check_images(images, algorithm)
@@ -58,7 +63,21 @@ def whiten_images(images: torch.Tensor,
 
 def compute_image_whitening_stats(images: torch.Tensor,
                                   n_components=None) -> Dict:
-    check_images(images, 'stats')
+    """
+    Wrapper for computing whitening stats of an image dataset
+
+    Parameters
+    ----------
+    images: tensor of shape (N, C, H, W)
+    n_components: Number of principal components to keep. If None, keep all components.
+                  If int, keep that many components. If float between 0 and 1,
+                  keep components that explain that fraction of variance.
+
+    Returns
+    ----------
+    Dictionary containing whitening statistics (eigenvalues, eigenvectors, mean)
+    """
+    check_images(images)
     flattened_images = images.flatten(start_dim=1)
     return compute_whitening_stats(flattened_images, n_components)
 
@@ -67,12 +86,14 @@ def create_frequency_filter(image_size: int, f0_factor: float = 0.4) -> torch.Te
     """
     Create a frequency domain filter for image whitening.
     
-    Args:
-        image_size: Size of the square image
-        f0_factor: Factor for determining the cutoff frequency (default 0.4)
+    Parameters
+    ----------
+    image_size: Size of the square image
+    f0_factor: Factor for determining the cutoff frequency (default 0.4)
         
-    Returns:
-        torch.Tensor: Frequency domain filter
+    Returns
+    ----------
+    torch.Tensor: Frequency domain filter
     """
     fx = torch.linspace(-image_size/2, image_size/2-1, image_size)
     fy = torch.linspace(-image_size/2, image_size/2-1, image_size)
@@ -90,12 +111,14 @@ def get_cached_filter(image_size: int, f0_factor: float = 0.4) -> torch.Tensor:
     """
     Get a cached frequency filter for the given image size.
     
-    Args:
-        image_size: Size of the square image
-        f0_factor: Factor for determining the cutoff frequency
+    Parameters
+    ----------
+    image_size: Size of the square image
+    f0_factor: Factor for determining the cutoff frequency
         
-    Returns:
-        torch.Tensor: Cached frequency domain filter
+    Returns
+    ----------
+    torch.Tensor: Cached frequency domain filter
     """
     return create_frequency_filter(image_size, f0_factor)
 
@@ -104,12 +127,14 @@ def normalize_variance(tensor: torch.Tensor, target_variance: float = 1.) -> tor
     """
     Normalize the variance of a tensor to a target value.
     
-    Args:
-        tensor: Input tensor
-        target_variance: Desired variance after normalization
+    Parameters
+    ----------
+    tensor: Input tensor
+    target_variance: Desired variance after normalization
         
-    Returns:
-        torch.Tensor: Normalized tensor
+    Returns
+    ----------
+    torch.Tensor: Normalized tensor
     """
         
     centered = tensor - tensor.mean()
@@ -129,13 +154,15 @@ def whiten_channel(
     """
     Apply frequency domain whitening to a single channel.
     
-    Args:
-        channel: Single channel image tensor
-        filt: Frequency domain filter
-        target_variance: Target variance for normalization
-        
-    Returns:
-        torch.Tensor: Whitened channel
+    Parameters
+    ----------
+    channel: Single channel image tensor
+    filt: Frequency domain filter
+    target_variance: Target variance for normalization
+    
+    Returns
+    ----------
+    torch.Tensor: Whitened channel
     """
 
     if torch.var(channel) < 1e-8:
@@ -164,13 +191,15 @@ def frequency_whitening(
     Method used in original sparsenet in Olshausen and Field in Nature
     and http://www.rctn.org/bruno/sparsenet/
     
-    Args:
-        images: Input images of shape (N, C, H, W)
-        target_variance: Target variance for normalization
-        f0_factor: Factor for determining filter cutoff frequency
+    Parameters
+    ----------
+    images: Input images of shape (N, C, H, W)
+    target_variance: Target variance for normalization
+    f0_factor: Factor for determining filter cutoff frequency
         
-    Returns:
-        torch.Tensor: Whitened images
+    Returns
+    ----------
+    torch.Tensor: Whitened images
     """
     _, _, H, W = images.shape
     if H != W:
@@ -204,11 +233,12 @@ class WhiteningTransform(object):
         """
         Initialize whitening transform.
         
-        Args:
-            algorithm: One of ['frequency', 'pca', 'zca']
-            stats: Pre-computed statistics for PCA/ZCA whitening
-            compute_stats: If True, will compute stats on first batch seen
-            **kwargs: Additional arguments passed to whitening function
+        Parameters
+        ----------
+        algorithm: One of ['frequency', 'pca', 'zca', 'cholesky]
+        stats: Pre-computed statistics for PCA/ZCA whitening
+        compute_stats: If True, will compute stats on first batch seen
+        **kwargs: Additional arguments passed to whitening function
         """
         self.algorithm = algorithm
         self.stats = stats
@@ -219,10 +249,12 @@ class WhiteningTransform(object):
         """
         Apply whitening transform to images.
         
-        Args:
+        Parameters
+        ----------
             images: Input images of shape [N, C, H, W] or [C, H, W]
         
-        Returns:
+        Returns
+        ----------
             Whitened images of same shape as input
         """
         # Add batch dimension if necessary
