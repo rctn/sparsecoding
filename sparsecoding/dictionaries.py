@@ -14,9 +14,11 @@ def load_dictionary_from_pickle(path):
     dictionary = torch.tensor(numpy_dictionary.astype(np.float32))
     return dictionary
 
+
 def load_bars_dictionary():
     path = os.path.join(DICTIONARY_PATH, "bars", "bars-16_by_16.p")
     return load_dictionary_from_pickle(path)
+
 
 def load_olshausen_dictionary():
     path = os.path.join(DICTIONARY_PATH, "olshausen", "olshausen-1.5x_overcomplete.p")
