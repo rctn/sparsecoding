@@ -4,7 +4,7 @@ from scipy.io import loadmat
 import torch
 from torch.utils.data import Dataset
 
-from sparsecoding.transforms.patch import patchify
+from sparsecoding.transforms import patchify
 
 
 class FieldDataset(Dataset):

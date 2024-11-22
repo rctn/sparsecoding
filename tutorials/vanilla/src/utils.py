@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import make_interp_spline
 import scipy.io as sio
-from sparsecoding.transforms.patch import sample_random_patches
+from sparsecoding.transforms import sample_random_patches
 import torch
 from torchvision.utils import make_grid
 
