@@ -60,6 +60,7 @@ def compute_whitening_stats(X: torch.Tensor,
         'mean': mean,
         'eigenvalues': eigenvalues,
         'eigenvectors': eigenvectors,
+        'covariance': Sigma
     }
 
 
@@ -112,10 +113,9 @@ def whiten(X: torch.Tensor,
              stats.get('eigenvectors').T)
     elif algorithm == 'cholesky':
         # Based on Cholesky decomp, also related to QR decomp
-        scaling = torch.diag(1. / (stats.get('eigenvalues') + epsilon))
-        W = torch.linalg.cholesky(stats.get('eigenvectors') @
-                                  scaling @
-                                  stats.get('eigenvectors').T).T
+        L = torch.linalg.cholesky(stats.get('covariance'))
+        # Whitening matrix is inverse of L
+        W = torch.linalg.inv(L)
     else:
         raise ValueError(f"Unknown whitening algorithm: {algorithm}, must be one of ['pca', 'zca', 'cholesky]")
 
