@@ -1,5 +1,6 @@
 import torch
 import torch.fft as fft
+import warnings
 from typing import Dict, Optional
 from functools import lru_cache
 from .whiten import whiten, compute_whitening_stats
@@ -281,9 +282,6 @@ class WhiteningTransform(object):
 
     def __repr__(self):
         return "custom whitening augmentation"
-    
-import warnings
-import torch
 
 
 def sample_random_patches(
