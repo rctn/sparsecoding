@@ -6,14 +6,12 @@ Historically, sparse coding has been largely focused on learning sparse represen
 
 We believe that sharing code within the scientific community is an important part of science and we hope that the research community finds this library useful. 
 
----
 
 ## Features
 
 - Check out our [Quickstart Guide](https://sparsecoding.readthedocs.io/en/latest/quickstart.html) for an overview and setup instructions.
 - Refer to the [API Reference](https://sparsecoding.readthedocs.io/en/latest/api.html) for detailed usage of the library's features.
 
----
 
 ## Setup
 
@@ -32,7 +30,6 @@ For more detailed instructions, see our [Installation Guide](https://sparsecodin
 Note: If you're using a Jupyter notebook and make changes to the source files, you can either:
 * Restart the Jupyter kernel, or
 * Use the autoreload extension as explained [here](https://ipython.readthedocs.io/en/stable/config/extensions/autoreload.html#autoreload).
-
 
 
 # Contributing
