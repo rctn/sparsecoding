@@ -2,26 +2,19 @@
 Installation
 ============
 
-The fastest way to install is by cloning the library from Github:
+The quickest way to install the library is by cloning it directly from GitHub:
 
 .. code:: bash
 
-    $ git clone https://github.com/rctn/sparsecoding.git
-    $ cd sparsecoding
-    $ pip install -e sparsecoding
-    $ pip install -r requirements.txt
+    git clone https://github.com/rctn/sparsecoding.git
+    cd sparsecoding
+    pip install -e sparsecoding
+    pip install -r requirements.txt
 
+The last command installs the dependencies required for the RCTN sparse coding library, including:
 
-The last line of the code above will install the RCTN sparse coding dependencies:
-
-- ``numpy`` 
-  
+- ``numpy``
 - ``scipy``
-
 - ``matplotlib``
-
 - ``torch``
-
 - ``torchvision``
-
-

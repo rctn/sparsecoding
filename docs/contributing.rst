@@ -2,36 +2,40 @@
 Contributing
 ============
 
-All contributions are welcome!
+We welcome all contributions!
 
 Bug Reporting
 -------------
 
-If you find a bug, submit a bug report on GitHub Issues. 
+If you encounter a bug, please report it by creating an issue on GitHub.
 
-Adding Features/Fixing Bugs
----------------------------
+Adding Features or Fixing Bugs
+------------------------------
 
-If you have identified a new feature or bug that you can fix yourself, please follow the following procedure.
+If you’ve identified a new feature to add or a bug you can fix, follow these steps:
 
-#. Clone ``main`` branch.
-#. Create a new branch to contain your changes. 
-#. ``add``, ``commit``, and ``push`` your changes to this branch. 
-#. Create a pull request (PR). See more information on submitting a PR request below.
+#. Clone the ``main`` branch.
+#. Create a new branch to work on your changes.
+#. Use ``add``, ``commit``, and ``push`` to save your changes to the new branch.
+#. Create a pull request (PR). See the "Submitting a Pull Request" section for more details.
 
 Submitting a Pull Request
 -------------------------
 
-#. If necessary, please **write your own unit tests** and add them to `the tests directory <https://github.com/rctn/sparsecoding/blob/main/tests>`_. 
-#. Verify that all tests are passed by running `python -m unittest discover tests -vvv`.
-#. Be sure that your PR follows formatting guidelines, `PEP8 <https://peps.python.org/pep-0008/>`_ and `flake8 <https://flake8.pycqa.org/en/latest/>`_. 
-#. Make sure the title of your PR summarizes the features/issues resolved in your branch. 
-#. Submit your pull request and add reviewers. 
+#. If applicable, write unit tests for your changes and add them to the 
+   `tests directory <https://github.com/rctn/sparsecoding/blob/main/tests>`_.
+#. Verify that all tests pass by running ``python -m unittest discover tests -vvv``.
+#. Ensure your code adheres to the formatting guidelines specified in 
+   `PEP8 <https://peps.python.org/pep-0008/>`_ and validated by 
+   `flake8 <https://flake8.pycqa.org/en/latest/>`_.
+#. Provide a concise and descriptive title for your PR that summarizes the changes made in your branch.
+#. Submit your PR and assign reviewers as necessary.
 
 Coding Style Guidelines
------------------------
-We adhere to the `NumPy documentation standards <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
+------------------------
 
-#. Format code in accordance with `flake8 <https://flake8.pycqa.org/en/latest/>`_ standard.
-#. Use underscores to separate words in non-class names: ``n_samples`` rather than ``nsamples``.
-#. Avoid single-character variable names.
+We follow the `NumPy documentation standards <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
+
+1. Format your code according to the `flake8 <https://flake8.pycqa.org/en/latest/>`_ standard.
+2. Use underscores to separate words in non-class names (e.g., ``n_samples`` instead of ``nsamples``).
+3. Avoid single-character variable names.
