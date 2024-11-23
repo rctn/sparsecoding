@@ -7,42 +7,34 @@ Overview
 
 .. _sparsecoding: https://github.com/rctn/sparsecoding/
 
-`sparsecoding`_ is a python package that provides tools for using sparse coding algorithms. 
-Historically, sparse coding has been largely focused on learning sparse representations 
-of images and we provide visualization and transformation tools to work with such data.
-However, we've tried to structure the dictionary learning methods and inference methods 
-in a manner that is data-agnostic.
+`sparsecoding`_ is a Python package that provides tools for implementing sparse coding algorithms. 
+Traditionally, sparse coding has been primarily used for learning sparse representations of images. 
+To support this, we include tools for visualization and data transformation specific to image data. 
+However, we have designed the dictionary learning and inference methods to be data-agnostic, 
+allowing for broader applications.
 
-The `sparsecoding`_ library is largely built using PyTorch which enables it to inheret 
-many performance benifits. These include:
+The `sparsecoding`_ library is built largely on PyTorch, enabling it to inherit several 
+performance benefits, such as:
 
 - GPU support
-
 - Batched operations
-
 - Auto-grad optimizers
 
+Structure of the Library
+-------------------------
 
+The functionalities of `sparsecoding`_ are organized into several modules:
 
-Structure of library
---------------------
+- ``sparsecoding.models``: Contains dictionary learning models (e.g., SparseCoding).
+- ``sparsecoding.inference``: Includes algorithms for computing latent coefficients.
+- ``sparsecoding.visualization``: Provides tools for visualizing image dictionaries and data.
+- ``sparsecoding.priors``: Offers methods for sampling from various sparse coding priors.
+- ``sparsecoding.datasets``: Contains utilities for loading datasets.
+- ``sparsecoding.transforms``: Includes methods for working with data, such as whitening and 
+  extracting patches from images.
 
-The functionalities of `sparsecoding`_ are broken into differnent modules.
-
-- ``sparsecoding.models`` contains dictionary learning models (e.g. SparseCoding).
-
-- ``sparsecoding.inference`` contains algorithms for computing latent coefficients.
-
-- ``sparsecoding.visualization`` contains tools for visualizing image dictionaries and data.
-
-- ``sparsecoding.priors`` contains methods for sampling from various sparse coding priors.
-
-- ``sparsecoding.datasets`` contains methods for loading datasets.
-
-- ``sparsecoding.transforms`` contains methods working with data, such as whitening and extracting patches from images.
-
-
-Getting started
+Getting Started
 ---------------
 
-`See example notebooks <https://github.com/rctn/sparsecoding/tree/main/examples>`_.
+Explore our `example notebooks <https://github.com/rctn/sparsecoding/tree/main/examples>`_ 
+to get started.
