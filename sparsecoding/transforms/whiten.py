@@ -76,7 +76,7 @@ def whiten(X: torch.Tensor,
 
     Parameters
     ----------
-    X: Input data of shape [N, D] where N are unique data elements of dimensionality D 
+    X: Input data of shape [N, D] where N are unique data elements of dimensionality D
     algorithm: Whitening transform we want to apply, one of ['zca', 'pca', or 'cholesky']
     stats: Dict containing precomputed whitening statistics (mean, eigenvectors, eigenvalues)
     n_components: number of components to retain if computing stats
