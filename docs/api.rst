@@ -43,25 +43,25 @@ Priors
 Datasets
 --------
 
-.. automodule:: sparsecoding.data.datasets
+.. automodule:: sparsecoding.datasets
     :members:
     :undoc-members:
     :show-inheritance:
 
 
-Whitening and sphering
-----------------------
+Data transformations
+--------------------
 
-.. automodule:: sparsecoding.data.transforms.whiten
+.. automodule:: sparsecoding.transforms.whiten
     :members:
     :undoc-members:
     :show-inheritance:
 
 
-Extracting image patches
-------------------------
+Image transformations
+---------------------
 
-.. automodule:: sparsecoding.data.transforms.patch
+.. automodule:: sparsecoding.transforms.patch
     :members:
     :undoc-members:
     :show-inheritance:
