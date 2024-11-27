@@ -62,8 +62,7 @@ def whiten_images(images: torch.Tensor,
                           must be one of ['frequency', 'pca', 'zca', 'cholesky]")
 
 
-def compute_image_whitening_stats(images: torch.Tensor,
-                                  n_components=None) -> Dict:
+def compute_image_whitening_stats(images: torch.Tensor) -> Dict:
     """
     Wrapper for computing whitening stats of an image dataset
 
@@ -80,7 +79,7 @@ def compute_image_whitening_stats(images: torch.Tensor,
     """
     check_images(images)
     flattened_images = images.flatten(start_dim=1)
-    return compute_whitening_stats(flattened_images, n_components)
+    return compute_whitening_stats(flattened_images)
 
 
 def create_frequency_filter(image_size: int, f0_factor: float = 0.4) -> torch.Tensor:
