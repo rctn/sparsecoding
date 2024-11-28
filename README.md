@@ -1,5 +1,8 @@
 # RCTN SparseCoding Library
 
+[![Documentation status](https://readthedocs.org/projects/sparsecoding/badge/)](
+https://sparsecoding.readthedocs.io/)
+
 `sparsecoding` is a Python library developed by UC Berkeley's [Redwood Center for Theoretical Neuroscience (RCTN)](https://redwood.berkeley.edu). It provides efficient, batched, and GPU-compatible [PyTorch](https://github.com/pytorch/pytorch) implementations for sparse coding related-algorithms, including dictionary learning, inference, and data processing.
 
 Historically, sparse coding has been largely focused on learning sparse representations of images and we provide visualization and transformation tools to work with such data. However, we’ve tried to structure the transformation, dictionary learning methods, and inference methods in a manner that is data-agnostic, making them applicable to a wide range of use cases.
