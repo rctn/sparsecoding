@@ -37,8 +37,9 @@ def compute_whitening_stats(X: torch.Tensor):
 def whiten(X: torch.Tensor,
            algorithm: str = 'zca',
            stats: Dict = None,
-           n_components=None,
-           epsilon: float = 0.
+           n_components: float = None,
+           epsilon: float = 0.,
+           return_W: bool = False
            ) -> torch.Tensor:
 
     """
@@ -60,9 +61,10 @@ def whiten(X: torch.Tensor,
 
     Notes
     ----------
-    See https://arxiv.org/abs/1512.00809 for more details on transformations
-    - Also gives two additional transforms that have not been implemented
-    - Possible TODO
+    See examples/Data_Whitening.ipynb for usage examples, and brief discussion about the different whitening methods
+
+    See https://arxiv.org/abs/1512.00809 for extensive details on whitening transformations
+    - Possible TODO: Also gives two additional transforms that have not been implemented
 
     See https://stats.stackexchange.com/questions/117427/what-is-the-difference-between-zca-whitening-and-pca-whitening
     for details on PCA and ZCA in particular
@@ -105,10 +107,17 @@ def whiten(X: torch.Tensor,
                  scaling @
                  stats.get('eigenvectors').T)
     elif algorithm == 'cholesky':
-        # Based on Cholesky decomp, also related to QR decomp
+        # Based on Cholesky decomp, related to QR decomp
         L = torch.linalg.cholesky(stats.get('covariance'))
-        W = torch.linalg.inv(L)
+        Identity = torch.eye(L.shape[0], device=L.device, dtype=L.dtype)
+        # Solve L @ W = I for W, more stable and quicker than inv(L)
+        W = torch.linalg.solve_triangular(L, Identity, upper=False)
     else:
         raise ValueError(f"Unknown whitening algorithm: {algorithm}, must be one of ['pca', 'zca', 'cholesky]")
 
-    return x_centered @ W.T
+    whitened = x_centered @ W.T
+
+    if return_W:
+        return whitened, W
+    else:
+        return whitened

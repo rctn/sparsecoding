@@ -1,7 +1,7 @@
 import torch
 import unittest
 
-from transforms import sample_random_patches, patchify, quilt
+from sparsecoding.transforms import sample_random_patches, patchify, quilt
 
 
 class TestPatcher(unittest.TestCase):
