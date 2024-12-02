@@ -1,136 +1,123 @@
 import torch
+from typing import Dict
 
 
-class Whitener(object):
-    """Performs data whitening (and un-whitening).
+def compute_whitening_stats(X: torch.Tensor):
 
-    On initialization, stores the mean and covariance of the input data.
-    These statistics are then used for future `whiten()` or `unwhiten()` calls.
+    """
+    Given a tensor of data, compute statistics for whitening transform.
 
     Parameters
     ----------
-    data : Tensor, shape [N, D]
-        Data to be whitened,
-        where:
-            N is the number of data points,
-            D is the dimension of the data points.
+    X: Input data of size [N, D]
 
-    Attributes
+    Returns
     ----------
-    mean : Tensor, shape [D]
-        Mean of the input data for the Whitener.
-    covariance : Tensor, shape [D, D]
-        Co-variance of the input data for the Whitener.
-    eigenvalues : Tensor, shape [D]
-        Eigenvalues of `self.covariance`.
-    eigenvectors : Tensor, shape [D, D]
-        Eigenvectors of `self.covariance`.
-    epsilon : float
-        Prevents division by zero.
+    Dictionary containing whitening statistics (eigenvalues, eigenvectors, mean)
     """
 
-    def __init__(
-        self,
-        data,
-        epsilon=1e-10,
-    ):
-        self.D = data.shape[1]
-        self.epsilon = epsilon
+    mean = torch.mean(X, dim=0)
+    X_centered = X - mean
+    Sigma = torch.cov(X_centered.T)
 
-        with torch.no_grad():
-            data = data.T  # [D, N]
+    eigenvalues, eigenvectors = torch.linalg.eigh(Sigma)
 
-            self.mean = torch.mean(data, dim=1)  # [D]
+    # Since eigh returns values in ascending order, reverse them to get descending order
+    eigenvalues = torch.flip(eigenvalues, dims=[0])
+    eigenvectors = torch.flip(eigenvectors, dims=[1])
 
-            self.covariance = torch.cov(data)  # [D, D]
-            self.eigenvalues, self.eigenvectors = torch.linalg.eigh(self.covariance)  # [D], [D, D]
+    return {
+        'mean': mean,
+        'eigenvalues': eigenvalues,
+        'eigenvectors': eigenvectors,
+        'covariance': Sigma
+    }
 
-    def whiten(
-        self,
-        data: torch.Tensor,
-    ):
-        """Whitens the input `data` to have zero mean and unit (identity) covariance.
 
-        Uses statistics of the data from class initialization.
+def whiten(X: torch.Tensor,
+           algorithm: str = 'zca',
+           stats: Dict = None,
+           n_components: float = None,
+           epsilon: float = 0.,
+           return_W: bool = False
+           ) -> torch.Tensor:
 
-        Note that this is a linear transformation; we use ZCA whitening.
-        (
-            See
-            https://stats.stackexchange.com/questions/117427/what-is-the-difference-between-zca-whitening-and-pca-whitening  # noqa
-            and
-            https://jermwatt.github.io/control-notes/posts/zca_sphereing/ZCA_Sphereing.html  # noqa
-            for good discussions on this vs. PCA whitening.
-        ).
+    """
+    Apply whitening transform to data using pre-computed statistics.
 
-        Parameters
-        ----------
-        data : torch.Tensor, shape [N, D]
-            Data to be whitened,
-            where:
-                N is the number of data points,
-                D is the dimension of the data points.
+    Parameters
+    ----------
+    X: Input data of shape [N, D] where N are unique data elements of dimensionality D
+    algorithm: Whitening transform we want to apply, one of ['zca', 'pca', or 'cholesky']
+    stats: Dict containing precomputed whitening statistics (mean, eigenvectors, eigenvalues)
+    n_components: Number of principal components to keep. If None, keep all components.
+                  If int, keep that many components. If float between 0 and 1,
+                  keep components that explain that fraction of variance.
+    epsilon: Optional small constant to prevent division by zero
 
-        Returns
-        -------
-        whitened_data : Tensor, shape [N, D]
-            Whitened data with zero mean and unit covariance.
-        """
-        if self.D != data.shape[1]:
-            raise ValueError(
-                f"`data` does not have same dimension as data given for class initialization"
-                f"(got {data.shape[1]} and {self.D}, respectively)."
-            )
+    Returns
+    ----------
+    Whitened data of shape [N, D]
 
-        data = data.T  # [D, N]
+    Notes
+    ----------
+    See examples/Data_Whitening.ipynb for usage examples, and brief discussion about the different whitening methods
 
-        centered_data = data - self.mean.reshape(self.D, 1)  # [D, N]
+    See https://arxiv.org/abs/1512.00809 for extensive details on whitening transformations
+    - Possible TODO: Also gives two additional transforms that have not been implemented
 
-        whitened_data = (
-            self.eigenvectors
-            @ torch.diag(1. / torch.sqrt(self.eigenvalues + self.epsilon))
-            @ self.eigenvectors.T
-            @ centered_data
-        )  # [D, N]
+    See https://stats.stackexchange.com/questions/117427/what-is-the-difference-between-zca-whitening-and-pca-whitening
+    for details on PCA and ZCA in particular
+    """
 
-        return whitened_data.T
+    if stats is None:
+        stats = compute_whitening_stats(X)
 
-    def unwhiten(
-        self,
-        whitened_data: torch.Tensor,
-    ):
-        """
-        Un-whitens the input `whitened_data`.
+    x_centered = X - stats.get('mean')
 
-        Uses statistics of the data from class initialization.
+    if algorithm == 'pca' or algorithm == 'zca':
 
-        This is the inverse of `whiten()`.
+        scaling = 1. / torch.sqrt(stats.get('eigenvalues') + epsilon)
 
-        Parameters
-        ----------
-        whitened_data : Tensor, shape [N, D]
-            Data to be un-whitened,
-            where:
-                N is the number of data points,
-                D is the dimension of the data points.
+        if n_components is not None:
+            if isinstance(n_components, float):
+                if not 0 < n_components <= 1:
+                    raise ValueError("If n_components is float, it must be between 0 and 1")
+                explained_variance_ratio = stats.get('eigenvalues') / torch.sum(stats.get('eigenvalues'))
+                cumulative_variance_ratio = torch.cumsum(explained_variance_ratio, dim=0)
+                n_components = torch.sum(cumulative_variance_ratio <= n_components) + 1
+            elif isinstance(n_components, int):
+                if not 0 < n_components <= len(stats.get('eigenvalues')):
+                    raise ValueError(f"n_components must be between 1 and {len(stats.get('eigenvalues'))}")
+            else:
+                raise ValueError("n_components must be int or float")
 
-        Returns
-        -------
-        unwhitened_data : Tensor, shape [N, D]
-            Un-whitened data.
-        """
-        if self.D != whitened_data.shape[1]:
-            raise ValueError(
-                f"`whitened_data` does not have same dimension as data given for class initialization"
-                f"(got {whitened_data.shape[1]} and {self.D}, respectively)."
-            )
+            mask = torch.zeros_like(scaling)
+            mask[:n_components] = 1.0
+            scaling = scaling * mask
 
-        whitened_data = whitened_data.T  # [D, N]
+        scaling = torch.diag(scaling)
 
-        unwhitened_data = (
-            self.eigenvectors
-            @ torch.diag(torch.sqrt(self.eigenvalues + self.epsilon))
-            @ self.eigenvectors.T
-            @ whitened_data
-        ) + self.mean.reshape(self.D, 1)  # [D, N]
+        if algorithm == 'pca':
+            # For PCA: project onto eigenvectors and scale
+            W = scaling @ stats.get('eigenvectors').T
+        else:
+            # For ZCA: project, scale, and rotate back
+            W = (stats.get('eigenvectors') @
+                 scaling @
+                 stats.get('eigenvectors').T)
+    elif algorithm == 'cholesky':
+        # Based on Cholesky decomp, related to QR decomp
+        L = torch.linalg.cholesky(stats.get('covariance'))
+        Identity = torch.eye(L.shape[0], device=L.device, dtype=L.dtype)
+        # Solve L @ W = I for W, more stable and quicker than inv(L)
+        W = torch.linalg.solve_triangular(L, Identity, upper=False)
+    else:
+        raise ValueError(f"Unknown whitening algorithm: {algorithm}, must be one of ['pca', 'zca', 'cholesky]")
 
-        return unwhitened_data.T
+    whitened = x_centered @ W.T
+
+    if return_W:
+        return whitened, W
+    else:
+        return whitened

@@ -1,7 +1,7 @@
 import torch
 import os
 from scipy.io import loadmat
-from sparsecoding.transforms.patch import patchify
+from sparsecoding.transforms import patchify
 from torch.utils.data import Dataset
 
 from sparsecoding.priors import Prior
