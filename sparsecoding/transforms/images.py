@@ -14,18 +14,18 @@ def check_images(images: torch.Tensor, algorithm: str = 'zca'):
         raise ValueError('Images must be in shape [N, C, H, W]')
 
     if images.shape[1] != 1 and algorithm == 'frequency':
-        raise ValueError(f'When using frequency based decorrelation, images must \
-                         be grayscale, received {images.shape[1]} channels')
+        raise ValueError("When using frequency based decorrelation, images must" +
+                         f"be grayscale, received {images.shape[1]} channels")
 
     # Running cov based methods on large images can eat memory
     if algorithm in ['zca', 'pca', 'cholesky'] and (images.shape[2] > 64 or images.shape[3] > 64):
-        print(f'WARNING: Running covaraince based whitening for images of size {images.shape[2]}x{images.shape[3]}. \
-               It is not recommended to use this for images smaller than 64x64')
+        print(f"WARNING: Running covaraince based whitening for images of size {images.shape[2]}x{images.shape[3]}." +
+              "It is not recommended to use this for images smaller than 64x64")
 
     # Running cov based methods on large images can eat memory
     if algorithm == 'frequency' and (images.shape[2] <= 64 or images.shape[3] <= 64):
-        print(f'WARNING: Running covaraince based whitening for images of size {images.shape[2]}x{images.shape[3]}. \
-               It is recommended to use this for images larger than 64x64')
+        print(f"WARNING: Running frequency based whitening for images of size {images.shape[2]}x{images.shape[3]}." +
+              "It is recommended to use this for images larger than 64x64")
 
 
 def whiten_images(images: torch.Tensor,
