@@ -487,6 +487,6 @@ def quilt(
         stride=stride,
     )
 
-    image = image / (normalization + 1e-6) 
+    image = image / (normalization + 1e-6)
 
     return image.reshape(*leading_dims, C, H, W)
