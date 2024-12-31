@@ -10,21 +10,23 @@ def lasso_loss(data, dictionary, coefficients, sparsity_penalty):
     Generic MSE + l1-norm loss.
     """
     batch_size = data.shape[0]
-    datahat = (dictionary@coefficients.t()).t()
+    datahat = (dictionary @ coefficients.t()).t()
 
-    mse_loss = torch.linalg.vector_norm(datahat-data, dim=1).square()
+    mse_loss = torch.linalg.vector_norm(datahat - data, dim=1).square()
     sparse_loss = torch.sum(torch.abs(coefficients), axis=1)
 
-    total_loss = (mse_loss + sparsity_penalty*sparse_loss)/batch_size
+    total_loss = (mse_loss + sparsity_penalty * sparse_loss) / batch_size
     return total_loss
+
 
 def loss_fn(data, dictionary, coefficients):
     return lasso_loss(
         data,
         dictionary,
         coefficients,
-        sparsity_penalty=1.,
+        sparsity_penalty=1.0,
     )
+
 
 def optimizer_fn(coefficients):
     return torch.optim.Adam(
@@ -35,7 +37,14 @@ def optimizer_fn(coefficients):
         weight_decay=0,
     )
 
-def test_shape(patch_size_fixture: int, dataset_size_fixture: int, bars_dictionary_fixture: torch.Tensor, bars_datas_fixture: list[torch.Tensor], bars_datasets_fixture: list[BarsDataset]):
+
+def test_shape(
+    patch_size_fixture: int,
+    dataset_size_fixture: int,
+    bars_dictionary_fixture: torch.Tensor,
+    bars_datas_fixture: list[torch.Tensor],
+    bars_datasets_fixture: list[BarsDataset],
+):
     """
     Test that PyTorchOptimizer inference returns expected shapes.
     """
@@ -48,7 +57,12 @@ def test_shape(patch_size_fixture: int, dataset_size_fixture: int, bars_dictiona
         a = inference_method.infer(data, bars_dictionary_fixture)
         assert_shape_equal(a, dataset.weights)
 
-def test_inference(bars_dictionary_fixture: torch.Tensor, bars_datas_fixture: list[torch.Tensor], bars_datasets_fixture: list[BarsDataset]):
+
+def test_inference(
+    bars_dictionary_fixture: torch.Tensor,
+    bars_datas_fixture: list[torch.Tensor],
+    bars_datasets_fixture: list[BarsDataset],
+):
     """
     Test that PyTorchOptimizer inference recovers the correct weights.
     """

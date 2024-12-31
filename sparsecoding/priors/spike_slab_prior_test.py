@@ -9,11 +9,11 @@ def test_spike_slab_prior(positive_only: bool):
     N = 10000
     D = 4
     p_spike = 0.5
-    scale = 1.
+    scale = 1.0
 
     torch.manual_seed(1997)
 
-    p_slab = 1. - p_spike
+    p_slab = 1.0 - p_spike
 
     spike_slab_prior = SpikeSlabPrior(
         D,
@@ -27,7 +27,7 @@ def test_spike_slab_prior(positive_only: bool):
 
     # Check spike probability.
     assert torch.allclose(
-        torch.sum(weights == 0.) / (N * D),
+        torch.sum(weights == 0.0) / (N * D),
         torch.tensor(p_spike),
         atol=1e-2,
     )
@@ -35,18 +35,18 @@ def test_spike_slab_prior(positive_only: bool):
     # Check Laplacian distribution.
     N_slab = p_slab * N * D
     if positive_only:
-        assert torch.sum(weights < 0.) == 0
+        assert torch.sum(weights < 0.0) == 0
     else:
         assert torch.allclose(
-            torch.sum(weights < 0.) / N_slab,
-            torch.sum(weights > 0.) / N_slab,
+            torch.sum(weights < 0.0) / N_slab,
+            torch.sum(weights > 0.0) / N_slab,
             atol=2e-2,
         )
         weights = torch.abs(weights)
 
-    laplace_weights = weights[weights > 0.]
-    for quantile in torch.arange(5) / 5.:
-        cutoff = -torch.log(1. - quantile)
+    laplace_weights = weights[weights > 0.0]
+    for quantile in torch.arange(5) / 5.0:
+        cutoff = -torch.log(1.0 - quantile)
         assert torch.allclose(
             torch.sum(laplace_weights < cutoff) / N_slab,
             quantile,

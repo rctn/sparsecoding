@@ -4,8 +4,15 @@ from .inference_method import InferenceMethod
 
 
 class ISTA(InferenceMethod):
-    def __init__(self, n_iter=100, sparsity_penalty=1e-2, stop_early=False,
-                 epsilon=1e-2, solver=None, return_all_coefficients=False):
+    def __init__(
+        self,
+        n_iter=100,
+        sparsity_penalty=1e-2,
+        stop_early=False,
+        epsilon=1e-2,
+        solver=None,
+        return_all_coefficients=False,
+    ):
         """Iterative shrinkage-thresholding algorithm for solving LASSO problems.
 
         Parameters
@@ -52,8 +59,8 @@ class ISTA(InferenceMethod):
         a : array-like, shape [batch_size, n_basis]
             activations
         """
-        a = (torch.abs(u) - self.threshold).clamp(min=0.)
-        a = torch.sign(u)*a
+        a = (torch.abs(u) - self.threshold).clamp(min=0.0)
+        a = torch.sign(u) * a
         return a
 
     def infer(self, data, dictionary, coeff_0=None, use_checknan=False):
@@ -85,9 +92,8 @@ class ISTA(InferenceMethod):
 
         # Calculate stepsize based on largest eigenvalue of
         # dictionary.T @ dictionary.
-        lipschitz_constant = torch.linalg.eigvalsh(
-            torch.mm(dictionary.T, dictionary))[-1]
-        stepsize = 1. / lipschitz_constant
+        lipschitz_constant = torch.linalg.eigvalsh(torch.mm(dictionary.T, dictionary))[-1]
+        stepsize = 1.0 / lipschitz_constant
         self.threshold = stepsize * self.sparsity_penalty
 
         # Initialize coefficients.
@@ -104,16 +110,17 @@ class ISTA(InferenceMethod):
                 old_u = u.clone().detach()
 
             if self.return_all_coefficients:
-                coefficients = torch.concat([coefficients,
-                                             self.threshold_nonlinearity(u).clone().unsqueeze(1)], dim=1)
+                coefficients = torch.concat(
+                    [coefficients, self.threshold_nonlinearity(u).clone().unsqueeze(1)],
+                    dim=1,
+                )
 
             u -= stepsize * torch.mm(residual, dictionary)
             self.coefficients = self.threshold_nonlinearity(u)
 
             if self.stop_early:
                 # Stopping condition is function of change of the coefficients.
-                a_change = torch.mean(
-                    torch.abs(old_u - u) / stepsize)
+                a_change = torch.mean(torch.abs(old_u - u) / stepsize)
                 if a_change < self.epsilon:
                     break
 

@@ -33,10 +33,7 @@ class L0Prior(Prior):
     def D(self):
         return self.prob_distr.shape[0]
 
-    def sample(
-        self,
-        num_samples: int
-    ):
+    def sample(self, num_samples: int):
         N = num_samples
 
         num_active_weights = 1 + torch.multinomial(
@@ -46,10 +43,7 @@ class L0Prior(Prior):
         )  # [N]
 
         d_idxs = torch.arange(self.D)
-        active_idx_mask = (
-            d_idxs.reshape(1, self.D)
-            < num_active_weights.reshape(N, 1)
-        )  # [N, self.D]
+        active_idx_mask = d_idxs.reshape(1, self.D) < num_active_weights.reshape(N, 1)  # [N, self.D]
 
         n_idxs = torch.arange(N).reshape(N, 1).expand(N, self.D)  # [N, D]
         # Need to shuffle here so that it's not always the first weights that are active.
@@ -60,6 +54,6 @@ class L0Prior(Prior):
         active_weight_idxs = n_idxs[active_idx_mask], shuffled_d_idxs[active_idx_mask]
 
         weights = torch.zeros((N, self.D), dtype=torch.float32)
-        weights[active_weight_idxs] += 1.
+        weights[active_weight_idxs] += 1.0
 
         return weights

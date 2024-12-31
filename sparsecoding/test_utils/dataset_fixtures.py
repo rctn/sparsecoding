@@ -1,4 +1,3 @@
-
 import pytest
 import torch
 
@@ -7,7 +6,9 @@ from sparsecoding.priors import Prior
 
 
 @pytest.fixture()
-def bars_datasets_fixture(patch_size_fixture: int, dataset_size_fixture: int, priors_fixture: list[Prior]) -> list[BarsDataset]:
+def bars_datasets_fixture(
+    patch_size_fixture: int, dataset_size_fixture: int, priors_fixture: list[Prior]
+) -> list[BarsDataset]:
     return [
         BarsDataset(
             patch_size=patch_size_fixture,
@@ -17,8 +18,11 @@ def bars_datasets_fixture(patch_size_fixture: int, dataset_size_fixture: int, pr
         for prior in priors_fixture
     ]
 
+
 @pytest.fixture()
-def bars_datas_fixture(patch_size_fixture: int, dataset_size_fixture: int, bars_datasets_fixture: list[BarsDataset]) -> list[torch.Tensor]:
+def bars_datas_fixture(
+    patch_size_fixture: int, dataset_size_fixture: int, bars_datasets_fixture: list[BarsDataset]
+) -> list[torch.Tensor]:
     return [
         dataset.data.reshape((dataset_size_fixture, patch_size_fixture * patch_size_fixture))
         for dataset in bars_datasets_fixture

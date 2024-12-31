@@ -4,9 +4,16 @@ from .inference_method import InferenceMethod
 
 
 class Vanilla(InferenceMethod):
-    def __init__(self, n_iter=100, coeff_lr=1e-3, sparsity_penalty=0.2,
-                 stop_early=False, epsilon=1e-2, solver=None,
-                 return_all_coefficients=False):
+    def __init__(
+        self,
+        n_iter=100,
+        coeff_lr=1e-3,
+        sparsity_penalty=0.2,
+        stop_early=False,
+        epsilon=1e-2,
+        solver=None,
+        return_all_coefficients=False,
+    ):
         """Gradient descent with Euler's method on model in Olshausen & Field
         (1997) with laplace prior over coefficients (corresponding to l-1 norm
         penalty).
@@ -61,8 +68,7 @@ class Vanilla(InferenceMethod):
         da : array-like, shape [batch_size, n_coefficients]
             Gradient of membrane potentials
         """
-        da = (dictionary.t()@residual.t()).t() - \
-            self.sparsity_penalty*torch.sign(a)
+        da = (dictionary.t() @ residual.t()).t() - self.sparsity_penalty * torch.sign(a)
         return da
 
     def infer(self, data, dictionary, coeff_0=None, use_checknan=False):
@@ -96,11 +102,11 @@ class Vanilla(InferenceMethod):
         if coeff_0 is not None:
             a = coeff_0.to(device)
         else:
-            a = torch.rand((batch_size, n_basis)).to(device)-0.5
+            a = torch.rand((batch_size, n_basis)).to(device) - 0.5
 
         coefficients = torch.zeros((batch_size, 0, n_basis)).to(device)
 
-        residual = data - (dictionary@a.t()).t()
+        residual = data - (dictionary @ a.t()).t()
         for i in range(self.n_iter):
 
             if self.return_all_coefficients:
@@ -110,13 +116,13 @@ class Vanilla(InferenceMethod):
                 old_a = a.clone().detach()
 
             da = self.grad(residual, dictionary, a)
-            a = a + self.coeff_lr*da
+            a = a + self.coeff_lr * da
 
             if self.stop_early:
-                if torch.linalg.norm(old_a - a)/torch.linalg.norm(old_a) < self.epsilon:
+                if torch.linalg.norm(old_a - a) / torch.linalg.norm(old_a) < self.epsilon:
                     break
 
-            residual = data - (dictionary@a.t()).t()
+            residual = data - (dictionary @ a.t()).t()
 
             if use_checknan:
                 self.checknan(a, "coefficients")

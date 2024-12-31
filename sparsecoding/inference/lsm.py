@@ -4,9 +4,17 @@ from .inference_method import InferenceMethod
 
 
 class LSM(InferenceMethod):
-    def __init__(self, n_iter=100, n_iter_LSM=6, beta=0.01, alpha=80.0,
-                 sigma=0.005, sparse_threshold=10**-2, solver=None,
-                 return_all_coefficients=False):
+    def __init__(
+        self,
+        n_iter=100,
+        n_iter_LSM=6,
+        beta=0.01,
+        alpha=80.0,
+        sigma=0.005,
+        sparse_threshold=10**-2,
+        solver=None,
+        return_all_coefficients=False,
+    ):
         """Infer latent coefficients generating data given dictionary.
         Method implemented according to "Group Sparse Coding with a Laplacian
         Scale Mixture Prior" (P. J. Garrigues & B. A. Olshausen, 2010)
@@ -73,7 +81,7 @@ class LSM(InferenceMethod):
 
         # Compute loss
         preds = torch.mm(dictionary, coefficients.t()).t()
-        mse_loss = (1/(2*(sigma**2))) * torch.sum(torch.square(data - preds), dim=1, keepdim=True)
+        mse_loss = (1 / (2 * (sigma**2))) * torch.sum(torch.square(data - preds), dim=1, keepdim=True)
         sparse_loss = torch.sum(lambdas * torch.abs(coefficients), dim=1, keepdim=True)
         loss = mse_loss + sparse_loss
         return loss
@@ -107,10 +115,7 @@ class LSM(InferenceMethod):
         # Outer loop, set sparsity penalties (lambdas).
         for i in range(self.n_iter_LSM):
             # Compute the initial values of lambdas
-            lambdas = (
-                (self.alpha + 1)
-                / (self.beta + torch.abs(coefficients.detach()))
-            )
+            lambdas = (self.alpha + 1) / (self.beta + torch.abs(coefficients.detach()))
 
             # Inner loop, optimize coefficients w/ current sparsity penalties.
             # Exits early if converged before `n_iter`s.
@@ -132,16 +137,12 @@ class LSM(InferenceMethod):
                 optimizer.step()
 
                 # Break if coefficients have converged.
-                if (
-                    last_loss is not None
-                    and loss > 1.05 * last_loss
-                ):
+                if last_loss is not None and loss > 1.05 * last_loss:
                     break
 
                 last_loss = loss
 
         # Sparsify the final solution by discarding the small coefficients
-        coefficients.data[torch.abs(coefficients.data)
-                          < self.sparse_threshold] = 0
+        coefficients.data[torch.abs(coefficients.data) < self.sparse_threshold] = 0
 
         return coefficients.detach()

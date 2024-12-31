@@ -9,13 +9,13 @@ from .pytorch_optimizer import PyTorchOptimizer
 from .vanilla import Vanilla
 
 __all__ = [
-  'IHT',
-  'InferenceMethod',
-  'ISTA',
-  'LCA',
-  'LSM',
-  'MP',
-  'OMP',
-  'PyTorchOptimizer',
-  'Vanilla'
+    "IHT",
+    "InferenceMethod",
+    "ISTA",
+    "LCA",
+    "LSM",
+    "MP",
+    "OMP",
+    "PyTorchOptimizer",
+    "Vanilla",
 ]

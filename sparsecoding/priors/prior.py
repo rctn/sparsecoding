@@ -9,6 +9,7 @@ class Prior(ABC):
     weights_dim : int
         Number of weights for each sample.
     """
+
     @abstractmethod
     def D(self):
         """

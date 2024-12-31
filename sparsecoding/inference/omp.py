@@ -13,7 +13,7 @@ class OMP(InferenceMethod):
     """
 
     def __init__(self, sparsity, solver=None, return_all_coefficients=False):
-        '''
+        """
 
         Parameters
         ----------
@@ -25,7 +25,7 @@ class OMP(InferenceMethod):
             can result in large memory usage/potential exhaustion. This function typically used for
             debugging
         solver : default=None
-        '''
+        """
         super().__init__(solver)
         self.sparsity = sparsity
         self.return_all_coefficients = return_all_coefficients
@@ -51,14 +51,13 @@ class OMP(InferenceMethod):
         device = dictionary.device
 
         # Define signal sparsity
-        K = np.ceil(self.sparsity*n_basis).astype(int)
+        K = np.ceil(self.sparsity * n_basis).astype(int)
 
         # Get dictionary norms in case atoms are not normalized
         dictionary_norms = torch.norm(dictionary, p=2, dim=0, keepdim=True)
 
         # Initialize coefficients for the whole batch
-        coefficients = torch.zeros(
-            batch_size, n_basis, requires_grad=False, device=device)
+        coefficients = torch.zeros(batch_size, n_basis, requires_grad=False, device=device)
 
         residual = data.clone()  # [batch_size, n_features]
 

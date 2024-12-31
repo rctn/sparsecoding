@@ -12,7 +12,7 @@ class IHT(InferenceMethod):
     """
 
     def __init__(self, sparsity, n_iter=10, solver=None, return_all_coefficients=False):
-        '''
+        """
 
         Parameters
         ----------
@@ -27,7 +27,7 @@ class IHT(InferenceMethod):
             can result in large memory usage/potential exhaustion. This function typically used for
             debugging
         solver : default=None
-        '''
+        """
         super().__init__(solver)
         self.n_iter = n_iter
         self.sparsity = sparsity
@@ -54,11 +54,10 @@ class IHT(InferenceMethod):
         device = dictionary.device
 
         # Define signal sparsity
-        K = np.ceil(self.sparsity*n_basis).astype(int)
+        K = np.ceil(self.sparsity * n_basis).astype(int)
 
         # Initialize coefficients for the whole batch
-        coefficients = torch.zeros(
-            batch_size, n_basis, requires_grad=False, device=device)
+        coefficients = torch.zeros(batch_size, n_basis, requires_grad=False, device=device)
 
         for _ in range(self.n_iter):
             # Compute the prediction given the current coefficients
@@ -75,9 +74,8 @@ class IHT(InferenceMethod):
             topK_values, indices = torch.topk(torch.abs(coefficients), K, dim=1)
 
             # Reconstruct coefficients using the output of torch.topk
-            coefficients = (
-                torch.sign(coefficients)
-                * torch.zeros(batch_size, n_basis, device=device).scatter_(1, indices, topK_values)
+            coefficients = torch.sign(coefficients) * torch.zeros(batch_size, n_basis, device=device).scatter_(
+                1, indices, topK_values
             )
 
         return coefficients.detach()
