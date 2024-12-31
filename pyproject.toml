@@ -1,0 +1,90 @@
+[project]
+name = "sparsecoding"
+version = "0.0.1"
+# Authors are the current, primary stewards of the repo
+# contributors can be found on github
+authors = [
+    { name = "Alex Belsten", email = "belsten@berkeley.edu" },
+    { name = "Christian Shewmake", email = "cshewmake2@gmail.com" },
+]
+description = "Pytorch infrasctructure for sparse coding."
+readme = "README.md"
+requires-python = ">=3.8"
+# Trove classifiers: https://pypi.org/pypi?%3Aaction=list_classifiers
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "Natural Language :: English",
+]
+
+dependencies = [
+    "matplotlib",
+    "numpy",
+    "scipy",
+    "torch",
+    "torchvision",
+]
+
+
+[project.optional-dependencies]
+dev = [
+    "black==24.*",
+    "coverage",
+    "ipykernel",
+    "jupytext",
+    "nbconvert",
+    "pylint>=3.3.0",
+    "pyright",
+    "pytest",
+]
+
+tutorials = [
+  "jupyter",
+  "matplotlib",
+  "tqdm",
+  "scipy",
+]
+
+all = [
+    "sparsecoding[dev,tutorials]",
+]
+
+[project.urls]
+"Homepage" = "sparsecoding.readthedocs.io"
+"Bug Tracker" = "https://github.com/rctn/sparsecoding/issues"
+
+[build-system]
+requires = ["flit_core>=3.2"]
+build-backend = "flit_core.buildapi"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = ["--tb=short"]
+norecursedirs = ".git examples"
+python_files = "*_test.py test_*.py"
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "\n%(asctime)s: %(levelname)s: %(filename)s:%(lineno)s::%(module)s::%(funcName)s:\n%(message)s"
+log_cli_date_format = "%y-%m-%d %H:%M:%S"
+
+[tool.pylint.format]
+max-line-length = "120"
+
+[tool.black]
+line-length = 120
+extend-exclude = "\\.ipynb"
+
+[tool.pylint]
+exclude = [".venv", ".vscode", "docs"]
+
+[tool.pylance]
+exclude = [".venv", ".vscode", "docs"]
+
+[tool.pyright]
+exclude = [".venv", ".vscode", "docs"]
+
+[tool.isort]
+line_length = 120
+profile = "black"
