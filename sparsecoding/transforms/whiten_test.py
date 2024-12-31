@@ -5,7 +5,7 @@ from sparsecoding.transforms import whiten
 
 def test_zca():
     N = 5000
-    D = 32*32
+    D = 32 * 32
 
     X = torch.rand((N, D), dtype=torch.float32)
 
@@ -22,13 +22,14 @@ def test_zca():
         atol=1e-3,
     ), "Whitened data should have unit (identity) covariance."
 
+
 def test_pca():
     N = 5000
-    D = 32*32
+    D = 32 * 32
 
     X = torch.rand((N, D), dtype=torch.float32)
 
-    X_whitened = whiten(X, algorithm='pca')
+    X_whitened = whiten(X, algorithm="pca")
 
     assert torch.allclose(
         torch.mean(X_whitened, dim=0),
@@ -41,13 +42,14 @@ def test_pca():
         atol=1e-3,
     ), "Whitened data should have unit (identity) covariance."
 
+
 def test_cholesky():
     N = 5000
-    D = 32*32
+    D = 32 * 32
 
     X = torch.rand((N, D), dtype=torch.float32)
 
-    X_whitened = whiten(X, algorithm='cholesky')
+    X_whitened = whiten(X, algorithm="cholesky")
 
     assert torch.allclose(
         torch.mean(X_whitened, dim=0),
