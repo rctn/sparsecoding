@@ -7,8 +7,6 @@ def test_l0_prior():
     N = 10000
     prob_distr = torch.tensor([0.5, 0.25, 0, 0.25])
 
-    torch.manual_seed(1997)
-
     D = prob_distr.shape[0]
 
     l0_prior = L0Prior(prob_distr)

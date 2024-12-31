@@ -11,8 +11,6 @@ def test_spike_slab_prior(positive_only: bool):
     p_spike = 0.5
     scale = 1.0
 
-    torch.manual_seed(1997)
-
     p_slab = 1.0 - p_spike
 
     spike_slab_prior = SpikeSlabPrior(
