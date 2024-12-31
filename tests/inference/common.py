@@ -1,7 +1,7 @@
 import torch
 
-from sparsecoding.priors import L0Prior, SpikeSlabPrior
 from sparsecoding.datasets import BarsDataset
+from sparsecoding.priors import L0Prior, SpikeSlabPrior
 
 torch.manual_seed(1997)
 
