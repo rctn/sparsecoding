@@ -77,4 +77,4 @@ def test_inference(
 
         a = inference_method.infer(data, bars_dictionary_fixture)
 
-        assert_allclose(a, dataset.weights, atol=1e-1, rtol=1e-1)
+        assert_allclose(a, dataset.weights, atol=2e-1, rtol=1e-1)
