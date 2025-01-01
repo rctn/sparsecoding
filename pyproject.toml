@@ -77,13 +77,13 @@ line-length = 120
 extend-exclude = "\\.ipynb"
 
 [tool.pylint]
-exclude = [".venv", ".vscode", "docs"]
+exclude = [".venv", ".vscode", "docs", "tutorials", "examples"]
 
 [tool.pylance]
-exclude = [".venv", ".vscode", "docs"]
+exclude = [".venv", ".vscode", "docs", "tutorials", "examples"]
 
 [tool.pyright]
-exclude = [".venv", ".vscode", "docs"]
+exclude = [".venv", ".vscode", "docs", "tutorials", "examples"]
 
 [tool.isort]
 line_length = 120
