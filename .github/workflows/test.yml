@@ -1,0 +1,48 @@
+name: test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{github.token}}
+
+      - name: Set up Python all python version
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+          token: ${{github.token}}
+          architecture: x64
+
+      - name: Install dependencies
+        run: |
+          python -m venv --upgrade-deps .venv
+          source .venv/bin/activate
+          pip install .[all]
+
+      - name: Run pytest with coverage
+        run: |
+          source .venv/bin/activate
+          IN_CI=true coverage run -m pytest
+            - name: generate coverage report
+
+      - name: Generate coverage report
+        run: |
+          source .venv/bin/activate
+          coverage xml -i
+          coverage html -i
+
+      # TODO: This must be done after we have an RCTN admin create a Codecov token
+      # - name: upload coverage report to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     flags: unittests
+      #     fail_ci_if_error: false
+      #     token: ${{ secrets.CODECOV_TOKEN }}
