@@ -1,10 +1,11 @@
-import torch
 import os
+
+import torch
 from scipy.io import loadmat
-from sparsecoding.transforms import patchify
 from torch.utils.data import Dataset
 
 from sparsecoding.priors import Prior
+from sparsecoding.transforms import patchify
 
 
 class BarsDataset(Dataset):
@@ -94,7 +95,7 @@ class FieldDataset(Dataset):
         self,
         root: str,
         patch_size: int = 8,
-        stride: int = None,
+        stride: int | None = None,
     ):
         self.P = patch_size
         if stride is None:
