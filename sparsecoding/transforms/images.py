@@ -6,32 +6,34 @@ from functools import lru_cache
 from .whiten import whiten, compute_whitening_stats
 
 
-def check_images(images: torch.Tensor, algorithm: str = 'zca'):
-    """Verify that tensor is in the shape [N, C, H, W] and C != when using fourier based method
-    """
+def check_images(images: torch.Tensor, algorithm: str = "zca"):
+    """Verify that tensor is in the shape [N, C, H, W] and C != when using fourier based method"""
 
     if len(images.shape) != 4:
-        raise ValueError('Images must be in shape [N, C, H, W]')
+        raise ValueError("Images must be in shape [N, C, H, W]")
 
-    if images.shape[1] != 1 and algorithm == 'frequency':
-        raise ValueError("When using frequency based decorrelation, images must" +
-                         f"be grayscale, received {images.shape[1]} channels")
-
-    # Running cov based methods on large images can eat memory
-    if algorithm in ['zca', 'pca', 'cholesky'] and (images.shape[2] > 64 or images.shape[3] > 64):
-        print(f"WARNING: Running covaraince based whitening for images of size {images.shape[2]}x{images.shape[3]}." +
-              "It is not recommended to use this for images smaller than 64x64")
+    if images.shape[1] != 1 and algorithm == "frequency":
+        raise ValueError(
+            "When using frequency based decorrelation, images must"
+            + f"be grayscale, received {images.shape[1]} channels"
+        )
 
     # Running cov based methods on large images can eat memory
-    if algorithm == 'frequency' and (images.shape[2] <= 64 or images.shape[3] <= 64):
-        print(f"WARNING: Running frequency based whitening for images of size {images.shape[2]}x{images.shape[3]}." +
-              "It is recommended to use this for images larger than 64x64")
+    if algorithm in ["zca", "pca", "cholesky"] and (images.shape[2] > 64 or images.shape[3] > 64):
+        print(
+            f"WARNING: Running covaraince based whitening for images of size {images.shape[2]}x{images.shape[3]}."
+            + "It is not recommended to use this for images smaller than 64x64"
+        )
+
+    # Running cov based methods on large images can eat memory
+    if algorithm == "frequency" and (images.shape[2] <= 64 or images.shape[3] <= 64):
+        print(
+            f"WARNING: Running frequency based whitening for images of size {images.shape[2]}x{images.shape[3]}."
+            + "It is recommended to use this for images larger than 64x64"
+        )
 
 
-def whiten_images(images: torch.Tensor,
-                  algorithm: str,
-                  stats: Dict = None,
-                  **kwargs) -> torch.Tensor:
+def whiten_images(images: torch.Tensor, algorithm: str, stats: Dict = None, **kwargs) -> torch.Tensor:
     """
     Wrapper for all whitening transformations
 
@@ -48,18 +50,20 @@ def whiten_images(images: torch.Tensor,
 
     check_images(images, algorithm)
 
-    if algorithm == 'frequency':
+    if algorithm == "frequency":
         return frequency_whitening(images, **kwargs)
 
-    elif algorithm in ['zca', 'pca', 'cholesky']:
+    elif algorithm in ["zca", "pca", "cholesky"]:
         N, C, H, W = images.shape
         flattened_images = images.flatten(start_dim=1)
         whitened = whiten(flattened_images, algorithm, stats, **kwargs)
         return whitened.reshape((N, C, H, W))
 
     else:
-        raise ValueError(f"Unknown whitening algorithm: {algorithm}, \
-                          must be one of ['frequency', 'pca', 'zca', 'cholesky]")
+        raise ValueError(
+            f"Unknown whitening algorithm: {algorithm}, \
+                          must be one of ['frequency', 'pca', 'zca', 'cholesky]"
+        )
 
 
 def compute_image_whitening_stats(images: torch.Tensor) -> Dict:
@@ -95,13 +99,13 @@ def create_frequency_filter(image_size: int, f0_factor: float = 0.4) -> torch.Te
     ----------
     torch.Tensor: Frequency domain filter
     """
-    fx = torch.linspace(-image_size/2, image_size/2-1, image_size)
-    fy = torch.linspace(-image_size/2, image_size/2-1, image_size)
-    fx, fy = torch.meshgrid(fx, fy, indexing='xy')
+    fx = torch.linspace(-image_size / 2, image_size / 2 - 1, image_size)
+    fy = torch.linspace(-image_size / 2, image_size / 2 - 1, image_size)
+    fx, fy = torch.meshgrid(fx, fy, indexing="xy")
 
     rho = torch.sqrt(fx**2 + fy**2)
     f_0 = f0_factor * image_size
-    filt = rho * torch.exp(-(rho/f_0)**4)
+    filt = rho * torch.exp(-((rho / f_0) ** 4))
 
     return fft.fftshift(filt)
 
@@ -123,7 +127,7 @@ def get_cached_filter(image_size: int, f0_factor: float = 0.4) -> torch.Tensor:
     return create_frequency_filter(image_size, f0_factor)
 
 
-def normalize_variance(tensor: torch.Tensor, target_variance: float = 1.) -> torch.Tensor:
+def normalize_variance(tensor: torch.Tensor, target_variance: float = 1.0) -> torch.Tensor:
     """
     Normalize the variance of a tensor to a target value.
 
@@ -146,11 +150,7 @@ def normalize_variance(tensor: torch.Tensor, target_variance: float = 1.) -> tor
     return centered
 
 
-def whiten_channel(
-    channel: torch.Tensor,
-    filt: torch.Tensor,
-    target_variance: float = 1.
-) -> torch.Tensor:
+def whiten_channel(channel: torch.Tensor, filt: torch.Tensor, target_variance: float = 1.0) -> torch.Tensor:
     """
     Apply frequency domain whitening to a single channel.
 
@@ -181,11 +181,7 @@ def whiten_channel(
     return whitened
 
 
-def frequency_whitening(
-    images: torch.Tensor,
-    target_variance: float = 0.1,
-    f0_factor: float = 0.4
-) -> torch.Tensor:
+def frequency_whitening(images: torch.Tensor, target_variance: float = 0.1, f0_factor: float = 0.4) -> torch.Tensor:
     """
     Apply frequency domain decorrelation to batched images.
     Method used in original sparsenet in Olshausen and Field in Nature
@@ -211,9 +207,7 @@ def frequency_whitening(
     # Process each image in the batch
     whitened_batch = []
     for img in images:
-        whitened_batch.append(
-            whiten_channel(img[0], filt, target_variance)
-        )
+        whitened_batch.append(whiten_channel(img[0], filt, target_variance))
 
     return torch.stack(whitened_batch).unsqueeze(1)
 
@@ -223,13 +217,8 @@ class WhiteningTransform(object):
     A PyTorch transform for image whitening that can be used in a transform pipeline.
     Supports frequency, PCA, and ZCA whitening methods.
     """
-    def __init__(
-        self,
-        algorithm: str = 'zca',
-        stats: Optional[Dict] = None,
-        compute_stats: bool = False,
-        **kwargs
-    ):
+
+    def __init__(self, algorithm: str = "zca", stats: Optional[Dict] = None, compute_stats: bool = False, **kwargs):
         """
         Initialize whitening transform.
 
@@ -266,12 +255,7 @@ class WhiteningTransform(object):
 
         check_images(images)
         # Apply whitening
-        whitened = whiten_images(
-            images,
-            self.algorithm,
-            self.stats,
-            **self.kwargs
-        )
+        whitened = whiten_images(images, self.algorithm, self.stats, **self.kwargs)
 
         # Remove batch dimension if input was single image
         if single_image:
@@ -322,18 +306,11 @@ def sample_random_patches(
         size=(N,),
     )
 
-    h_patch_idxs, w_patch_idxs = torch.meshgrid(
-        torch.arange(P),
-        torch.arange(P),
-        indexing='ij'
-    )
+    h_patch_idxs, w_patch_idxs = torch.meshgrid(torch.arange(P), torch.arange(P), indexing="ij")
     h_idxs = h_start_idx.reshape(N, 1, 1) + h_patch_idxs
     w_idxs = w_start_idx.reshape(N, 1, 1) + w_patch_idxs
 
-    leading_idxs = [
-        torch.randint(low=0, high=image.shape[d], size=(N, 1, 1))
-        for d in range(image.dim() - 3)
-    ]
+    leading_idxs = [torch.randint(low=0, high=image.shape[d], size=(N, 1, 1)) for d in range(image.dim() - 3)]
 
     idxs = leading_idxs + [slice(None), h_idxs, w_idxs]
 
@@ -379,20 +356,14 @@ def patchify(
     if stride is None:
         stride = P
 
-    if (
-        H % P != 0
-        or W % P != 0
-    ):
+    if H % P != 0 or W % P != 0:
         warnings.warn(
             f"Image size ({H, W}) not evenly divisible by `patch_size` ({P}),"
             f"parts on the bottom and/or right will be cropped.",
             UserWarning,
         )
 
-    N = (
-        int((H - P + 1 + stride) // stride)
-        * int((W - P + 1 + stride) // stride)
-    )
+    N = int((H - P + 1 + stride) // stride) * int((W - P + 1 + stride) // stride)
 
     patches = torch.nn.functional.unfold(
         input=image.reshape(-1, C, H, W),
@@ -439,22 +410,16 @@ def quilt(
     W = width
 
     if int(H / P) * int(W / P) != N:
-        raise ValueError(
-            f"Expected {N} patches per image, "
-            f"got int(H/P) * int(W/P) = {int(H / P) * int(W / P)}."
-        )
+        raise ValueError(f"Expected {N} patches per image, " f"got int(H/P) * int(W/P) = {int(H / P) * int(W / P)}.")
 
-    if (
-        H % P != 0
-        or W % P != 0
-    ):
+    if H % P != 0 or W % P != 0:
         warnings.warn(
             f"Image size ({H, W}) not evenly divisible by `patch_size` ({P}),"
             f"parts on the bottom and/or right will be zeroed.",
             UserWarning,
         )
 
-    patches = patches.reshape(-1, N, C*P*P)  # [prod(*), N, C*P*P]
+    patches = patches.reshape(-1, N, C * P * P)  # [prod(*), N, C*P*P]
     patches = torch.permute(patches, (0, 2, 1))  # [prod(*), C*P*P, N]
     image = torch.nn.functional.fold(
         input=patches,
