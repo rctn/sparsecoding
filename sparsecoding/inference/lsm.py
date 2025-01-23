@@ -4,6 +4,40 @@ from .inference_method import InferenceMethod
 
 
 class LSM(InferenceMethod):
+    """
+    Infer latent coefficients generating data given dictionary.
+    Method implemented according to "Group Sparse Coding with a Laplacian
+    Scale Mixture Prior" (P. J. Garrigues & B. A. Olshausen, 2010)
+
+    Parameters
+    ----------
+    n_iter : int, default=100
+        Number of iterations to run for an optimizer
+    n_iter_LSM : int, default=6
+        Number of iterations to run the outer loop of  LSM
+    beta : float, default=0.01
+        LSM parameter used to update lambdas
+    alpha : float, default=80.0
+        LSM parameter used to update lambdas
+    sigma : float, default=0.005
+        LSM parameter used to compute the loss function
+    sparse_threshold : float, default=10**-2
+        Threshold used to discard smallest coefficients in the final
+        solution SM parameter used to compute the loss function
+    return_all_coefficients : bool, default=False
+        Returns all coefficients during inference procedure if True
+        User beware: If n_iter is large, setting this parameter to True
+        can result in large memory usage/potential exhaustion. This
+        function typically used for debugging.
+    solver : default=None
+
+    References
+    ----------
+    [1] Garrigues, P., & Olshausen, B. (2010). Group sparse coding with
+    a laplacian scale mixture prior. Advances in neural information
+    processing systems, 23.
+    """
+
     def __init__(
         self,
         n_iter=100,
@@ -15,38 +49,6 @@ class LSM(InferenceMethod):
         solver=None,
         return_all_coefficients=False,
     ):
-        """Infer latent coefficients generating data given dictionary.
-        Method implemented according to "Group Sparse Coding with a Laplacian
-        Scale Mixture Prior" (P. J. Garrigues & B. A. Olshausen, 2010)
-
-        Parameters
-        ----------
-        n_iter : int, default=100
-            Number of iterations to run for an optimizer
-        n_iter_LSM : int, default=6
-            Number of iterations to run the outer loop of  LSM
-        beta : float, default=0.01
-            LSM parameter used to update lambdas
-        alpha : float, default=80.0
-            LSM parameter used to update lambdas
-        sigma : float, default=0.005
-            LSM parameter used to compute the loss function
-        sparse_threshold : float, default=10**-2
-            Threshold used to discard smallest coefficients in the final
-            solution SM parameter used to compute the loss function
-        return_all_coefficients : bool, default=False
-            Returns all coefficients during inference procedure if True
-            User beware: If n_iter is large, setting this parameter to True
-            can result in large memory usage/potential exhaustion. This
-            function typically used for debugging.
-        solver : default=None
-
-        References
-        ----------
-        [1] Garrigues, P., & Olshausen, B. (2010). Group sparse coding with
-        a laplacian scale mixture prior. Advances in neural information
-        processing systems, 23.
-        """
         super().__init__(solver)
         self.n_iter = n_iter
         self.n_iter_LSM = n_iter_LSM

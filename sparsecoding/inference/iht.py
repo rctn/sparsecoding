@@ -9,25 +9,23 @@ class IHT(InferenceMethod):
     Infer coefficients for each image in data using elements dictionary.
     Method description can be traced to
     "Iterative Hard Thresholding for Compressed Sensing" (T. Blumensath & M. E. Davies, 2009)
+
+    Parameters
+    ----------
+    sparsity : scalar (1,)
+        Sparsity of the solution. The number of active coefficients will be set
+        to ceil(sparsity * data_dim) at the end of each iterative update.
+    n_iter : scalar (1,) default=100
+        number of iterations to run for an inference method
+    return_all_coefficients : string (1,) default=False
+        returns all coefficients during inference procedure if True
+        user beware: if n_iter is large, setting this parameter to True
+        can result in large memory usage/potential exhaustion. This function typically used for
+        debugging
+    solver : default=None
     """
 
     def __init__(self, sparsity, n_iter=10, solver=None, return_all_coefficients=False):
-        """
-
-        Parameters
-        ----------
-        sparsity : scalar (1,)
-            Sparsity of the solution. The number of active coefficients will be set
-            to ceil(sparsity * data_dim) at the end of each iterative update.
-        n_iter : scalar (1,) default=100
-            number of iterations to run for an inference method
-        return_all_coefficients : string (1,) default=False
-            returns all coefficients during inference procedure if True
-            user beware: if n_iter is large, setting this parameter to True
-            can result in large memory usage/potential exhaustion. This function typically used for
-            debugging
-        solver : default=None
-        """
         super().__init__(solver)
         self.n_iter = n_iter
         self.sparsity = sparsity

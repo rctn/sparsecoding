@@ -4,6 +4,33 @@ from .inference_method import InferenceMethod
 
 
 class ISTA(InferenceMethod):
+    """
+    Iterative shrinkage-thresholding algorithm for solving LASSO problems.
+
+    Parameters
+    ----------
+    n_iter : int, default=100
+        Number of iterations to run
+    sparsity_penalty : float, default=0.2
+
+    stop_early : bool, default=False
+        Stops dynamics early based on change in coefficents
+    epsilon : float, default=1e-2
+        Only used if stop_early True, specifies criteria to stop dynamics
+    return_all_coefficients : str, default=False
+        Returns all coefficients during inference procedure if True
+        User beware: if n_iter is large, setting this parameter to True
+        can result in large memory usage/potential exhaustion. This
+        function typically used for debugging.
+    solver : default=None
+
+    References
+    ----------
+    [1] Beck, A., & Teboulle, M. (2009). A fast iterative
+    shrinkage-thresholding algorithm for linear inverse problems.
+    SIAM journal on imaging sciences, 2(1), 183-202.
+    """
+
     def __init__(
         self,
         n_iter=100,
@@ -13,31 +40,6 @@ class ISTA(InferenceMethod):
         solver=None,
         return_all_coefficients=False,
     ):
-        """Iterative shrinkage-thresholding algorithm for solving LASSO problems.
-
-        Parameters
-        ----------
-        n_iter : int, default=100
-            Number of iterations to run
-        sparsity_penalty : float, default=0.2
-
-        stop_early : bool, default=False
-            Stops dynamics early based on change in coefficents
-        epsilon : float, default=1e-2
-            Only used if stop_early True, specifies criteria to stop dynamics
-        return_all_coefficients : str, default=False
-            Returns all coefficients during inference procedure if True
-            User beware: if n_iter is large, setting this parameter to True
-            can result in large memory usage/potential exhaustion. This
-            function typically used for debugging.
-        solver : default=None
-
-        References
-        ----------
-        [1] Beck, A., & Teboulle, M. (2009). A fast iterative
-        shrinkage-thresholding algorithm for linear inverse problems.
-        SIAM journal on imaging sciences, 2(1), 183-202.
-        """
         super().__init__(solver)
         self.n_iter = n_iter
         self.sparsity_penalty = sparsity_penalty
