@@ -4,6 +4,41 @@ from .inference_method import InferenceMethod
 
 
 class LCA(InferenceMethod):
+    """
+    Method implemented according locally competative algorithm (LCA)
+    with the ideal soft thresholding function.
+
+    Parameters
+    ----------
+    n_iter : int, default=100
+        Number of iterations to run
+    coeff_lr : float, default=1e-3
+        Update rate of coefficient dynamics
+    threshold : float, default=0.1
+        Threshold for non-linearity
+    stop_early : bool, default=False
+        Stops dynamics early based on change in coefficents
+    epsilon : float, default=1e-2
+        Only used if stop_early True, specifies criteria to stop dynamics
+    nonnegative : bool, default=False
+        Constrain coefficients to be nonnegative
+    return_all_coefficients : str, {"none", "membrane", "active"}, default="none"
+        Returns all coefficients during inference procedure if not equal
+        to "none". If return_all_coefficients=="membrane", membrane
+        potentials (u) returned. If return_all_coefficients=="active",
+        active units (a) (output of thresholding function over u) returned.
+        User beware: if n_iter is large, setting this parameter to True
+        can result in large memory usage/potential exhaustion. This
+        function typically used for debugging.
+    solver : default=None
+
+    References
+    ----------
+    [1] Rozell, C. J., Johnson, D. H., Baraniuk, R. G., & Olshausen,
+    B. A. (2008). Sparse coding via thresholding and local competition
+    in neural circuits. Neural computation, 20(10), 2526-2563.
+    """
+
     def __init__(
         self,
         n_iter=100,
@@ -15,39 +50,6 @@ class LCA(InferenceMethod):
         return_all_coefficients="none",
         nonnegative=False,
     ):
-        """Method implemented according locally competative algorithm (LCA)
-        with the ideal soft thresholding function.
-
-        Parameters
-        ----------
-        n_iter : int, default=100
-            Number of iterations to run
-        coeff_lr : float, default=1e-3
-            Update rate of coefficient dynamics
-        threshold : float, default=0.1
-            Threshold for non-linearity
-        stop_early : bool, default=False
-            Stops dynamics early based on change in coefficents
-        epsilon : float, default=1e-2
-            Only used if stop_early True, specifies criteria to stop dynamics
-        nonnegative : bool, default=False
-            Constrain coefficients to be nonnegative
-        return_all_coefficients : str, {"none", "membrane", "active"}, default="none"
-            Returns all coefficients during inference procedure if not equal
-            to "none". If return_all_coefficients=="membrane", membrane
-            potentials (u) returned. If return_all_coefficients=="active",
-            active units (a) (output of thresholding function over u) returned.
-            User beware: if n_iter is large, setting this parameter to True
-            can result in large memory usage/potential exhaustion. This
-            function typically used for debugging.
-        solver : default=None
-
-        References
-        ----------
-        [1] Rozell, C. J., Johnson, D. H., Baraniuk, R. G., & Olshausen,
-        B. A. (2008). Sparse coding via thresholding and local competition
-        in neural circuits. Neural computation, 20(10), 2526-2563.
-        """
         super().__init__(solver)
         self.threshold = threshold
         self.coeff_lr = coeff_lr
