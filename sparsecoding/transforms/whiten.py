@@ -9,10 +9,11 @@ def compute_whitening_stats(X: torch.Tensor):
 
     Parameters
     ----------
-    X: Input data of size [N, D]
+    X : torch.Tensor
+        Input data of size [N, D]
 
     Returns
-    ----------
+    -------
     Dictionary containing whitening statistics (eigenvalues, eigenvectors, mean)
     """
 
@@ -43,20 +44,25 @@ def whiten(
 
     Parameters
     ----------
-    X: Input data of shape [N, D] where N are unique data elements of dimensionality D
-    algorithm: Whitening transform we want to apply, one of ['zca', 'pca', or 'cholesky']
-    stats: Dict containing precomputed whitening statistics (mean, eigenvectors, eigenvalues)
-    n_components: Number of principal components to keep. If None, keep all components.
-                  If int, keep that many components. If float between 0 and 1,
-                  keep components that explain that fraction of variance.
-    epsilon: Optional small constant to prevent division by zero
+    X : torch.Tensor
+        Input data of shape [N, D] where N are unique data elements of dimensionality D
+    algorithm : str, default="zca"
+        Whitening transform we want to apply, one of ['zca', 'pca', or 'cholesky']
+    stats : Dict, default=None
+        Dict containing precomputed whitening statistics (mean, eigenvectors, eigenvalues)
+    n_components : float, int, default=None
+        Number of principal components to keep. If None, keep all components.
+        If int, keep that many components. If float between 0 and 1,
+        keep components that explain that fraction of variance.
+    epsilon : float, default=0.0
+        Optional small constant to prevent division by zero
 
     Returns
-    ----------
+    -------
     Whitened data of shape [N, D]
 
     Notes
-    ----------
+    -----
     See examples/Data_Whitening.ipynb for usage examples, and brief discussion about the different whitening methods
 
     See https://arxiv.org/abs/1512.00809 for extensive details on whitening transformations
