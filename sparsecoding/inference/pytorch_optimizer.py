@@ -4,24 +4,26 @@ from .inference_method import InferenceMethod
 
 
 class PyTorchOptimizer(InferenceMethod):
-    def __init__(self, optimizer_f, loss_f, n_iter=100, solver=None):
-        """Infer coefficients using provided loss functional and optimizer
+    """
+    Infer coefficients using provided loss functional and optimizer.
 
-        Parameters
-        ----------
-        optimizer : function handle
-            Pytorch optimizer handle have single parameter:
-                (coefficients)
-            where coefficients is of shape [batch_size, n_basis]
-        loss_f : function handle
-            Must have parameters:
-                 (data, dictionary, coefficients)
-            where data is of shape [batch_size, n_features]
-            and loss_f must return tensor of size [batch_size,]
-        n_iter : int, default=100
-            Number of iterations to run for an optimizer
-        solver : default=None
-        """
+    Parameters
+    ----------
+    optimizer : function handle
+        Pytorch optimizer handle have single parameter:
+            (coefficients)
+        where coefficients is of shape [batch_size, n_basis]
+    loss_f : function handle
+        Must have parameters:
+                (data, dictionary, coefficients)
+        where data is of shape [batch_size, n_features]
+        and loss_f must return tensor of size [batch_size,]
+    n_iter : int, default=100
+        Number of iterations to run for an optimizer
+    solver : default=None
+    """
+
+    def __init__(self, optimizer_f, loss_f, n_iter=100, solver=None):
         super().__init__(solver)
         self.optimizer_f = optimizer_f
         self.loss_f = loss_f

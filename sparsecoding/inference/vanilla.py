@@ -4,6 +4,37 @@ from .inference_method import InferenceMethod
 
 
 class Vanilla(InferenceMethod):
+    """
+    Gradient descent with Euler's method on model in Olshausen & Field
+    (1997) with laplace prior over coefficients (corresponding to L1 norm
+    penalty).
+
+    Parameters
+    ----------
+    n_iter : int, default=100
+        Number of iterations to run
+    coeff_lr : float, default=1e-3
+        Update rate of coefficient dynamics
+    sparsity_penalty : float, default=0.2
+
+    stop_early : bool, default=False
+        Stops dynamics early based on change in coefficents
+    epsilon : float, default=1e-2
+        Only used if stop_early True, specifies criteria to stop dynamics
+    return_all_coefficients : str, default=False
+        Returns all coefficients during inference procedure if True
+        User beware: If n_iter is large, setting this parameter to True
+        Can result in large memory usage/potential exhaustion. This
+        function typically used for debugging.
+    solver : default=None
+
+    References
+    ----------
+    [1] Olshausen, B. A., & Field, D. J. (1997). Sparse coding with an
+    overcomplete basis set: A strategy employed by V1?. Vision research,
+    37(23), 3311-3325.
+    """
+
     def __init__(
         self,
         n_iter=100,
@@ -14,35 +45,6 @@ class Vanilla(InferenceMethod):
         solver=None,
         return_all_coefficients=False,
     ):
-        """Gradient descent with Euler's method on model in Olshausen & Field
-        (1997) with laplace prior over coefficients (corresponding to l-1 norm
-        penalty).
-
-        Parameters
-        ----------
-        n_iter : int, default=100
-            Number of iterations to run
-        coeff_lr : float, default=1e-3
-            Update rate of coefficient dynamics
-        sparsity_penalty : float, default=0.2
-
-        stop_early : bool, default=False
-            Stops dynamics early based on change in coefficents
-        epsilon : float, default=1e-2
-            Only used if stop_early True, specifies criteria to stop dynamics
-        return_all_coefficients : str, default=False
-            Returns all coefficients during inference procedure if True
-            User beware: If n_iter is large, setting this parameter to True
-            Can result in large memory usage/potential exhaustion. This
-            function typically used for debugging.
-        solver : default=None
-
-        References
-        ----------
-        [1] Olshausen, B. A., & Field, D. J. (1997). Sparse coding with an
-        overcomplete basis set: A strategy employed by V1?. Vision research,
-        37(23), 3311-3325.
-        """
         super().__init__(solver)
         self.coeff_lr = coeff_lr
         self.sparsity_penalty = sparsity_penalty

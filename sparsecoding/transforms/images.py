@@ -39,12 +39,15 @@ def whiten_images(images: torch.Tensor, algorithm: str, stats: Dict = None, **kw
 
     Parameters
     ----------
-    images: tensor of shape (N, C, H, W)
-    algorithm: what whitening transform we want to use
-    stats: dictionary of dataset statistics needed for whitening transformations
+    images : torch.Tensor
+        Tensor of shape (N, C, H, W)
+    algorithm : str
+        What whitening transform we want to use
+    stats : Dict, default=None
+        Dictionary of dataset statistics needed for whitening transformations
 
     Returns
-    ----------
+    -------
     Tensor of whitened data in shape (N, C, H, W)
     """
 
@@ -72,13 +75,11 @@ def compute_image_whitening_stats(images: torch.Tensor) -> Dict:
 
     Parameters
     ----------
-    images: tensor of shape (N, C, H, W)
-    n_components: Number of principal components to keep. If None, keep all components.
-                  If int, keep that many components. If float between 0 and 1,
-                  keep components that explain that fraction of variance.
+    images : torch.Tensor
+        Tensor of shape (N, C, H, W)
 
     Returns
-    ----------
+    -------
     Dictionary containing whitening statistics (eigenvalues, eigenvectors, mean)
     """
     check_images(images)
@@ -92,11 +93,13 @@ def create_frequency_filter(image_size: int, f0_factor: float = 0.4) -> torch.Te
 
     Parameters
     ----------
-    image_size: Size of the square image
-    f0_factor: Factor for determining the cutoff frequency (default 0.4)
+    image_size : int
+        Size of the square image
+    f0_factor : float, default=0.4
+        Factor for determining the cutoff frequency
 
     Returns
-    ----------
+    -------
     torch.Tensor: Frequency domain filter
     """
     fx = torch.linspace(-image_size / 2, image_size / 2 - 1, image_size)
@@ -117,11 +120,13 @@ def get_cached_filter(image_size: int, f0_factor: float = 0.4) -> torch.Tensor:
 
     Parameters
     ----------
-    image_size: Size of the square image
-    f0_factor: Factor for determining the cutoff frequency
+    image_size : int
+        Size of the square image
+    f0_factor : float, default=0.4
+        Factor for determining the cutoff frequency
 
     Returns
-    ----------
+    -------
     torch.Tensor: Cached frequency domain filter
     """
     return create_frequency_filter(image_size, f0_factor)
@@ -133,11 +138,13 @@ def normalize_variance(tensor: torch.Tensor, target_variance: float = 1.0) -> to
 
     Parameters
     ----------
-    tensor: Input tensor
-    target_variance: Desired variance after normalization
+    tensor : torch.Tensor
+        Input tensor
+    target_variance : float, default=1.0
+        Desired variance after normalization
 
     Returns
-    ----------
+    -------
     torch.Tensor: Normalized tensor
     """
 
@@ -156,12 +163,15 @@ def whiten_channel(channel: torch.Tensor, filt: torch.Tensor, target_variance: f
 
     Parameters
     ----------
-    channel: Single channel image tensor
-    filt: Frequency domain filter
-    target_variance: Target variance for normalization
+    channel : torch.Tensor
+        Single channel image tensor
+    filt : torch.Tensor
+        Frequency domain filter
+    target_variance : float, default=1.0
+        Target variance for normalization
 
     Returns
-    ----------
+    -------
     torch.Tensor: Whitened channel
     """
 
@@ -189,12 +199,15 @@ def frequency_whitening(images: torch.Tensor, target_variance: float = 0.1, f0_f
 
     Parameters
     ----------
-    images: Input images of shape (N, C, H, W)
-    target_variance: Target variance for normalization
-    f0_factor: Factor for determining filter cutoff frequency
+    images : torch.Tensor
+        Input images of shape (N, C, H, W)
+    target_variance : float, default=0.1
+        Target variance for normalization
+    f0_factor : float, default = 0.4
+        Factor for determining filter cutoff frequency
 
     Returns
-    ----------
+    -------
     torch.Tensor: Whitened images
     """
     _, _, H, W = images.shape
@@ -216,19 +229,20 @@ class WhiteningTransform(object):
     """
     A PyTorch transform for image whitening that can be used in a transform pipeline.
     Supports frequency, PCA, and ZCA whitening methods.
+
+    Parameters
+    ----------
+    algorithm : str
+        One of ['frequency', 'pca', 'zca', 'cholesky]
+    stats : Dict or None, default=None
+        Pre-computed statistics for PCA/ZCA whitening
+    compute_stats : bool, default=False
+        If True, will compute stats on first batch seen
+    **kwargs
+        Additional arguments passed to whitening function
     """
 
     def __init__(self, algorithm: str = "zca", stats: Optional[Dict] = None, compute_stats: bool = False, **kwargs):
-        """
-        Initialize whitening transform.
-
-        Parameters
-        ----------
-        algorithm: One of ['frequency', 'pca', 'zca', 'cholesky]
-        stats: Pre-computed statistics for PCA/ZCA whitening
-        compute_stats: If True, will compute stats on first batch seen
-        **kwargs: Additional arguments passed to whitening function
-        """
         self.algorithm = algorithm
         self.stats = stats
         self.compute_stats = compute_stats
@@ -240,11 +254,12 @@ class WhiteningTransform(object):
 
         Parameters
         ----------
-            images: Input images of shape [N, C, H, W] or [C, H, W]
+        images : torch.Tensor
+            Input images of shape [N, C, H, W] or [C, H, W]
 
         Returns
-        ----------
-            Whitened images of same shape as input
+        -------
+        Whitened images of same shape as input
         """
         # Add batch dimension if necessary
         if images.dim() == 3:
@@ -281,10 +296,8 @@ def sample_random_patches(
     num_patches : int
         Number of patches to sample.
     image : Tensor, shape [*, C, H, W]
-        where:
-            C is the number of channels,
-            H is the image height,
-            W is the image width.
+        where: C is the number of channels, H is the image height,
+        W is the image width.
 
     Returns
     -------
@@ -333,10 +346,8 @@ def patchify(
     patch_size : int
         Patch side length.
     image : Tensor, shape [*, C, H, W]
-        where:
-            C is the number of channels,
-            H is the image height,
-            W is the image width.
+        where: C is the number of channels, H is the image height,
+        W is the image width.
     stride : int, optional
         Stride between patches in pixel space. If not specified, set to
         `patch_size` (non-overlapping patches).
@@ -345,10 +356,8 @@ def patchify(
     -------
     patches : Tensor, shape [*, N, C, P, P]
         Non-overlapping patches taken from the input image,
-        where:
-            P is the patch size,
-            N is the number of patches, equal to H//P * W//P,
-            C is the number of channels of the input image.
+        where: P is the patch size, N is the number of patches, equal
+        to H//P * W//P, C is the number of channels of the input image.
     """
     leading_dims = image.shape[:-3]
     C, H, W = image.shape[-3:]
@@ -394,10 +403,8 @@ def quilt(
         Width for the reconstructed image.
     patches : Tensor, shape [*, N, C, P, P]
         Non-overlapping patches from an input image,
-        where:
-            P is the patch size,
-            N is the number of patches,
-            C is the number of channels in the image.
+        where: P is the patch size, N is the number of patches,
+        C is the number of channels in the image.
 
     Returns
     -------
