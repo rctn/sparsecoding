@@ -1,9 +1,12 @@
 name: flake8
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     paths:
-      - '**.py'
+      - "**.py"
 
 jobs:
   flake8-lint:
@@ -20,4 +23,3 @@ jobs:
 
       - name: flake8-lint
         uses: py-actions/flake8@v2
-
