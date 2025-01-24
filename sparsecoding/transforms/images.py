@@ -77,10 +77,6 @@ def compute_image_whitening_stats(images: torch.Tensor) -> Dict:
     ----------
     images : torch.Tensor
         Tensor of shape (N, C, H, W)
-    n_components : 
-        Number of principal components to keep. If None, keep all components.
-        If int, keep that many components. If float between 0 and 1,
-        keep components that explain that fraction of variance.
 
     Returns
     -------
@@ -242,7 +238,7 @@ class WhiteningTransform(object):
         Pre-computed statistics for PCA/ZCA whitening
     compute_stats : bool, default=False
         If True, will compute stats on first batch seen
-    **kwargs : 
+    **kwargs
         Additional arguments passed to whitening function
     """
 
@@ -360,7 +356,7 @@ def patchify(
     -------
     patches : Tensor, shape [*, N, C, P, P]
         Non-overlapping patches taken from the input image,
-        where: P is the patch size, N is the number of patches, equal 
+        where: P is the patch size, N is the number of patches, equal
         to H//P * W//P, C is the number of channels of the input image.
     """
     leading_dims = image.shape[:-3]
