@@ -61,7 +61,7 @@ Data transformations
 Image transformations
 ---------------------
 
-.. automodule:: sparsecoding.transforms.patch
+.. automodule:: sparsecoding.transforms.images
     :members:
     :undoc-members:
     :show-inheritance:
