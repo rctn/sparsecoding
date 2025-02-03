@@ -12,12 +12,12 @@ class IHT(InferenceMethod):
 
     Parameters
     ----------
-    sparsity : scalar (1,)
+    sparsity : float
         Sparsity of the solution. The number of active coefficients will be set
         to ceil(sparsity * data_dim) at the end of each iterative update.
-    n_iter : scalar (1,) default=100
+    n_iter : int, default=10
         number of iterations to run for an inference method
-    return_all_coefficients : string (1,) default=False
+    return_all_coefficients : str, default=False
         returns all coefficients during inference procedure if True
         user beware: if n_iter is large, setting this parameter to True
         can result in large memory usage/potential exhaustion. This function typically used for
