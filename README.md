@@ -20,7 +20,7 @@ Reference sparse coding implementations for efficient learning and inference imp
 
 1. Clone the repo.
 2. Navigate to the directory containing the repo directory.
-3. Run `pip install -e .[all]`
+3. Run `pip install -e ".[all]"`
 4. Install the natural images dataset from this link: https://rctn.org/bruno/sparsenet/IMAGES.mat
 5. Try running the demo notebook: `examples/sparse_coding.ipynb`
 
