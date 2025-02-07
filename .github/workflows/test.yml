@@ -39,10 +39,9 @@ jobs:
           coverage xml -i
           coverage html -i
 
-      # TODO: This must be done after we have an RCTN admin create a Codecov token
-      # - name: upload coverage report to Codecov
-      #   uses: codecov/codecov-action@v4
-      #   with:
-      #     flags: unittests
-      #     fail_ci_if_error: false
-      #     token: ${{ secrets.CODECOV_TOKEN }}
+      - name: upload coverage report to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          flags: unittests
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
