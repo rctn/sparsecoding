@@ -10,22 +10,20 @@ class OMP(InferenceMethod):
     Method description can be traced to:
         "Orthogonal Matching Pursuit: Recursive Function Approximation with Application to Wavelet Decomposition"
         (Y. Pati & R. Rezaiifar & P. Krishnaprasad, 1993)
+
+    Parameters
+    ----------
+    sparsity : scalar (1,)
+        sparsity of the solution
+    return_all_coefficients : string (1,) default=False
+        returns all coefficients during inference procedure if True
+        user beware: if n_iter is large, setting this parameter to True
+        can result in large memory usage/potential exhaustion. This function typically used for
+        debugging
+    solver : default=None
     """
 
     def __init__(self, sparsity, solver=None, return_all_coefficients=False):
-        """
-
-        Parameters
-        ----------
-        sparsity : scalar (1,)
-            sparsity of the solution
-        return_all_coefficients : string (1,) default=False
-            returns all coefficients during inference procedure if True
-            user beware: if n_iter is large, setting this parameter to True
-            can result in large memory usage/potential exhaustion. This function typically used for
-            debugging
-        solver : default=None
-        """
         super().__init__(solver)
         self.sparsity = sparsity
         self.return_all_coefficients = return_all_coefficients
