@@ -8,8 +8,7 @@ The quickest way to install the library is by cloning it directly from GitHub:
 
     git clone https://github.com/rctn/sparsecoding.git
     cd sparsecoding
-    pip install -e sparsecoding
-    pip install -r requirements.txt
+    pip install -e ".[all]"
 
 The last command installs the dependencies required for the RCTN sparse coding library, including:
 
