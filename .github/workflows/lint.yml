@@ -24,9 +24,9 @@ jobs:
 
       - name: Install packages
         run: |
-          python -v venv --upgrade-deps .venv
-          source .vinv/bin/activate
-          pip install .[all]
+          python -m venv --upgrade-deps .venv
+          source .venv/bin/activate
+          pip install ".[all]"
 
       - name: Run black
         run: |
