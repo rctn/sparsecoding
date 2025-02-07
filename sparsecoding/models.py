@@ -6,8 +6,16 @@ import pickle as pkl
 
 class SparseCoding(torch.nn.Module):
 
-    def __init__(self, inference_method, n_basis, n_features,
-                 sparsity_penalty=0.2, device=None, check_for_dictionary_nan=False, **kwargs):
+    def __init__(
+        self,
+        inference_method,
+        n_basis,
+        n_features,
+        sparsity_penalty=0.2,
+        device=None,
+        check_for_dictionary_nan=False,
+        **kwargs,
+    ):
         """Class for learning a sparse code via dictionary learning
 
         Parameters
@@ -72,8 +80,7 @@ class SparseCoding(torch.nn.Module):
             Already-inferred coefficients
         """
         dictionary_grad = self.compute_grad_dict(data, a)
-        self.dictionary = torch.add(self.dictionary,
-                                    self.dictionary_lr*dictionary_grad)
+        self.dictionary = torch.add(self.dictionary, self.dictionary_lr * dictionary_grad)
         if self.check_for_dictionary_nan:
             self.checknan()
 
@@ -115,7 +122,7 @@ class SparseCoding(torch.nn.Module):
                 self.normalize_dictionary()
                 # compute current loss
                 loss += self.compute_loss(batch, a)
-            losses.append(loss/len(dataloader))
+            losses.append(loss / len(dataloader))
         return np.asarray(losses)
 
     def compute_loss(self, data, a):
@@ -135,10 +142,10 @@ class SparseCoding(torch.nn.Module):
         """
         batch_size, _ = data.shape
 
-        MSE_loss = torch.square(torch.linalg.vector_norm(data-torch.mm(self.dictionary, a.t()).t(), dim=1))
-        sparsity_loss = self.sparsity_penalty*torch.abs(a).sum(dim=1)
+        MSE_loss = torch.square(torch.linalg.vector_norm(data - torch.mm(self.dictionary, a.t()).t(), dim=1))
+        sparsity_loss = self.sparsity_penalty * torch.abs(a).sum(dim=1)
         total_loss = torch.sum(MSE_loss + sparsity_loss)
-        return total_loss.item()/batch_size
+        return total_loss.item() / batch_size
 
     def get_numpy_dictionary(self):
         """Returns dictionary as numpy array

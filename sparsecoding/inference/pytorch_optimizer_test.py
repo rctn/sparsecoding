@@ -48,7 +48,7 @@ def test_shape(
     """
     Test that PyTorchOptimizer inference returns expected shapes.
     """
-    for (data, dataset) in zip(bars_datas_fixture, bars_datasets_fixture):
+    for data, dataset in zip(bars_datas_fixture, bars_datasets_fixture):
         inference_method = inference.PyTorchOptimizer(
             optimizer_fn,
             loss_fn,
@@ -68,7 +68,7 @@ def test_inference(
     """
     N_ITER = 1000
 
-    for (data, dataset) in zip(bars_datas_fixture, bars_datasets_fixture):
+    for data, dataset in zip(bars_datas_fixture, bars_datasets_fixture):
         inference_method = inference.PyTorchOptimizer(
             optimizer_fn,
             loss_fn,

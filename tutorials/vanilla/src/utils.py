@@ -19,8 +19,7 @@ def show_patches(patches, title=""):
     size = int(np.sqrt(patches.size(1)))
     batch_size = patches.size(0)
     img_grid = torch.reshape(patches, (-1, 1, size, size))
-    out = make_grid(img_grid, padding=1, nrow=int(
-        np.sqrt(batch_size)), pad_value=torch.min(patches))[0]
+    out = make_grid(img_grid, padding=1, nrow=int(np.sqrt(batch_size)), pad_value=torch.min(patches))[0]
     display(out, bar=False, title=title)
 
 
@@ -33,12 +32,10 @@ def show_patches_sbs(orig, recon, title="", dpi=200):
     batch_size = orig.size(0)
 
     img_grid = torch.reshape(orig, (-1, 1, size, size))
-    orig_out = make_grid(img_grid, padding=1, nrow=int(
-        np.sqrt(batch_size)), pad_value=torch.min(orig))[0]
+    orig_out = make_grid(img_grid, padding=1, nrow=int(np.sqrt(batch_size)), pad_value=torch.min(orig))[0]
 
     img_grid = torch.reshape(recon, (-1, 1, size, size))
-    recon_out = make_grid(img_grid, padding=1, nrow=int(
-        np.sqrt(batch_size)), pad_value=torch.min(recon))[0]
+    recon_out = make_grid(img_grid, padding=1, nrow=int(np.sqrt(batch_size)), pad_value=torch.min(recon))[0]
 
     display_sbs(orig_out, recon_out, bar=False, title=title, dpi=dpi)
 
@@ -145,8 +142,7 @@ def create_patches(imgs, epochs, batch_size, N, rng):
     patches : Tensor of size (epochs, batch_size, pixels_per_patch).
     """
     # TODO: use rng here when sample_random_patches supports it.
-    patches = sample_random_patches(int(np.sqrt(N)), batch_size*epochs,
-                                    torch.unsqueeze(imgs, 1))
+    patches = sample_random_patches(int(np.sqrt(N)), batch_size * epochs, torch.unsqueeze(imgs, 1))
     patches = patches.reshape(epochs, batch_size, N)
     return patches
 
@@ -161,8 +157,7 @@ def load_data(img_path):
     """
     imgs = sio.loadmat(img_path)["IMAGES"]  # (512, 512, 10)
     # normalize to mean 0 var 1
-    imgs = (imgs - np.mean(imgs, axis=(0, 1), keepdims=True)) / np.std(
-        imgs, axis=(0, 1), keepdims=True)
+    imgs = (imgs - np.mean(imgs, axis=(0, 1), keepdims=True)) / np.std(imgs, axis=(0, 1), keepdims=True)
     return torch.Tensor(imgs).permute(2, 0, 1)
 
 
@@ -210,11 +205,7 @@ def plot_coeffs(coeffs, title="patch_coefficients"):
     """
     plt.stem(coeffs, use_line_collection=True)
     plt.title(title)
-    plt.tick_params(
-        axis='x',
-        which='both',
-        bottom=False,
-        labelbottom=False)
+    plt.tick_params(axis="x", which="both", bottom=False, labelbottom=False)
     plt.show()
 
 
@@ -224,11 +215,11 @@ def coeff_grid(coeffs):
     coeffs is Tensor of shape (batch_size, number_of_bases).
     """
     batch_size = coeffs.shape[0]
-    num_to_plot = batch_size//2
+    num_to_plot = batch_size // 2
     num_cols = 4
 
     fig = plt.figure()
-    gs = fig.add_gridspec(num_to_plot//num_cols, num_cols, hspace=0, wspace=0)
+    gs = fig.add_gridspec(num_to_plot // num_cols, num_cols, hspace=0, wspace=0)
     subplots = gs.subplots(sharex="col", sharey=True).flatten()
     for i, subplot in enumerate(subplots[:num_to_plot]):
         subplot.stem(coeffs[i], use_line_collection=True)
@@ -248,10 +239,8 @@ def show_components(phi, a, dpi):
     phi = phi[:, order]
 
     weighted_phi = (phi * a.T).T
-    weighted_phi = weighted_phi.reshape(
-        -1, 1, patch_size, patch_size)
-    components = make_grid(weighted_phi, ncol=int(np.sqrt(a.shape[0])),
-                           padding=1, pad_value=-1)[0]
+    weighted_phi = weighted_phi.reshape(-1, 1, patch_size, patch_size)
+    components = make_grid(weighted_phi, ncol=int(np.sqrt(a.shape[0])), padding=1, pad_value=-1)[0]
 
     vmax = torch.max(weighted_phi)
     vmin = torch.min(weighted_phi)

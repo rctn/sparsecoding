@@ -7,8 +7,9 @@ import matplotlib.pyplot as plt
 # TODO: Combine/refactor plot_dictionary and plot_patches; lots of repeated code.
 # TODO: Add method for visualizing coefficients.
 # TODO: Add method for visualizing reconstructions and original patches.
-def plot_dictionary(dictionary, color=False, nrow=30, normalize=True,
-                    scale_each=True, fig=None, ax=None, title="", size=8):
+def plot_dictionary(
+    dictionary, color=False, nrow=30, normalize=True, scale_each=True, fig=None, ax=None, title="", size=8
+):
     """Plot all elements of dictionary in grid
 
     Parameters
@@ -45,12 +46,12 @@ def plot_dictionary(dictionary, color=False, nrow=30, normalize=True,
     if color:
         nch = 3
 
-    patch_size = int(np.sqrt(n_features//nch))
+    patch_size = int(np.sqrt(n_features // nch))
 
-    D_imgs = dictionary.T.reshape([n_basis, patch_size, patch_size, nch]).permute([
-        0, 3, 1, 2])  # swap channel dims for torch
-    grid_img = torchvision.utils.make_grid(
-        D_imgs, nrow=nrow, normalize=normalize, scale_each=scale_each).cpu()
+    D_imgs = dictionary.T.reshape([n_basis, patch_size, patch_size, nch]).permute(
+        [0, 3, 1, 2]
+    )  # swap channel dims for torch
+    grid_img = torchvision.utils.make_grid(D_imgs, nrow=nrow, normalize=normalize, scale_each=scale_each).cpu()
 
     if fig is None or ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(size, size))
@@ -64,8 +65,7 @@ def plot_dictionary(dictionary, color=False, nrow=30, normalize=True,
     return fig, ax
 
 
-def plot_patches(patches, color=False, normalize=True, scale_each=True,
-                 fig=None, ax=None, title="", size=8):
+def plot_patches(patches, color=False, normalize=True, scale_each=True, fig=None, ax=None, title="", size=8):
     """
     Parameters
     ----------
@@ -104,11 +104,10 @@ def plot_patches(patches, color=False, normalize=True, scale_each=True,
 
     patch_size = int(np.sqrt(patches.size(1)))
 
-    D_imgs = patches.reshape(
-        [batch_size, patch_size, patch_size, nch]).permute([
-            0, 3, 1, 2])  # swap channel dims for torch
-    grid_img = make_grid(
-        D_imgs, nrow=nrow, normalize=normalize, scale_each=scale_each).cpu()
+    D_imgs = patches.reshape([batch_size, patch_size, patch_size, nch]).permute(
+        [0, 3, 1, 2]
+    )  # swap channel dims for torch
+    grid_img = make_grid(D_imgs, nrow=nrow, normalize=normalize, scale_each=scale_each).cpu()
 
     if fig is None or ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(size, size))
