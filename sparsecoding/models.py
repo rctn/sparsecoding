@@ -5,6 +5,28 @@ import pickle as pkl
 
 
 class SparseCoding(torch.nn.Module):
+    """Class for learning a sparse code via dictionary learning
+
+    Parameters
+    ----------
+    inference_method : sparsecoding.InferenceMethod
+        Method for inferring coefficients for each image given the
+        dictionary
+    n_basis : int
+        Number of basis functions in dictionary
+    n_features : int
+        Number of features in data
+    sparsity_penalty : float, default=0.2
+        Sparsity penalty
+    dictionary_lr : float, default=1e-2
+        Learning rate of dictionary update
+    device : torch.device, default=torch.device("cpu")
+        Which device to utilize
+    check_for_dictionary_nan : bool, default=False
+        Flag to check for nans in the dictionary after gradient
+        updates and normalizations. Raises ValueError if nan
+        found
+    """
 
     def __init__(
         self,
@@ -16,28 +38,6 @@ class SparseCoding(torch.nn.Module):
         check_for_dictionary_nan=False,
         **kwargs,
     ):
-        """Class for learning a sparse code via dictionary learning
-
-        Parameters
-        ----------
-        inference_method : sparsecoding.InferenceMethod
-            Method for inferring coefficients for each image given the
-            dictionary
-        n_basis : int
-            Number of basis functions in dictionary
-        n_features : int
-            Number of features in data
-        sparsity_penalty : float, default=0.2
-            Sparsity penalty
-        dictionary_lr : float, default=1e-2
-            Learning rate of dictionary update
-        device : torch.device, default=torch.device("cpu")
-            Which device to utilize
-        check_for_dictionary_nan : bool, default=False
-            Flag to check for nans in the dictionary after gradient
-            updates and normalizations. Raises ValueError if nan
-            found
-        """
         super(SparseCoding, self).__init__()
         self.inference_method = inference_method
         self.n_basis = n_basis
