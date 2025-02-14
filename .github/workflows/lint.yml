@@ -1,0 +1,49 @@
+name: lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{github.token}}
+
+      - name: Set up Python all python version
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+          token: ${{github.token}}
+          architecture: x64
+
+      - name: Install packages
+        run: |
+          python -m venv --upgrade-deps .venv
+          source .venv/bin/activate
+          pip install ".[all]"
+
+      - name: Run black
+        run: |
+          source .venv/bin/activate
+          python -m black --config pyproject.toml --check --diff .
+
+      - name: Get all Python files
+        id: list_files
+        run: |
+          echo "files=$(git ls-files '*.py' '*.pyi' | xargs)" >> $GITHUB_OUTPUT
+
+      - name: Run Pylint on files
+        run: |
+          source .venv/bin/activate
+          files="${{ steps.list_files.outputs.files }}"
+          if [ -n "$files" ]; then
+            pylint --rcfile=.pylintrc $files
+          else
+            echo "No Python files found."
+          fi

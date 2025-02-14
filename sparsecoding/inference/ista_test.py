@@ -15,7 +15,7 @@ def test_shape(
     """Test that ISTA inference returns expected shapes."""
     N_ITER = 10
 
-    for (data, dataset) in zip(bars_datas_fixture, bars_datasets_fixture):
+    for data, dataset in zip(bars_datas_fixture, bars_datasets_fixture):
         inference_method = inference.ISTA(N_ITER)
         a = inference_method.infer(data, bars_dictionary_fixture)
         assert_shape_equal(a, dataset.weights)
@@ -32,7 +32,7 @@ def test_inference(
 ):
     """Test that ISTA inference recovers the correct weights."""
     N_ITER = 5000
-    for (data, dataset) in zip(bars_datas_fixture, bars_datasets_fixture):
+    for data, dataset in zip(bars_datas_fixture, bars_datasets_fixture):
         inference_method = inference.ISTA(n_iter=N_ITER)
 
         a = inference_method.infer(data, bars_dictionary_fixture)

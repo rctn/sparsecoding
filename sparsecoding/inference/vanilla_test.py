@@ -17,7 +17,7 @@ def test_shape(
     """
     N_ITER = 10
 
-    for (data, dataset) in zip(bars_datas_fixture, bars_datasets_fixture):
+    for data, dataset in zip(bars_datas_fixture, bars_datasets_fixture):
         inference_method = inference.Vanilla(N_ITER)
         a = inference_method.infer(data, bars_dictionary_fixture)
         assert_shape_equal(a, dataset.weights)
@@ -38,7 +38,7 @@ def test_inference(
     LR = 5e-2
     N_ITER = 1000
 
-    for (data, dataset) in zip(bars_datas_fixture, bars_datasets_fixture):
+    for data, dataset in zip(bars_datas_fixture, bars_datasets_fixture):
         inference_method = inference.Vanilla(coeff_lr=LR, n_iter=N_ITER)
 
         a = inference_method.infer(data, bars_dictionary_fixture)

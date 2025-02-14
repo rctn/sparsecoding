@@ -1,0 +1,15 @@
+[run]
+omit =
+    */examples/*.*
+    */docs/*.*
+    */tutorials/*.*
+
+[report]
+omit =
+    *test*
+    **/__init__.py
+exclude_lines =
+    if typing:
+    if TYPE_CHECKING:
+
+ignore_errors = True

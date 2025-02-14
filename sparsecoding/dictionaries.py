@@ -8,7 +8,7 @@ DICTIONARY_PATH = os.path.join(MODULE_PATH, "data/dictionaries")
 
 
 def load_dictionary_from_pickle(path):
-    dictionary_file = open(path, 'rb')
+    dictionary_file = open(path, "rb")
     numpy_dictionary = pkl.load(dictionary_file)
     dictionary_file.close()
     dictionary = torch.tensor(numpy_dictionary.astype(np.float32))
