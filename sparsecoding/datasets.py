@@ -79,10 +79,11 @@ class FieldDataset(Dataset):
     root : str
         Location to download the dataset to.
     patch_size : int
-        Side length of patches for sparse dictionary learning.
-    stride : int, optional
-        Stride for sampling patches. If not specified, set to `patch_size`
-        (non-overlapping patches).
+        Side length of patches to extract from images.
+    num_patches : int
+        Number of patches to extract from images.
+    whitened : bool, default=True
+        Download the whitened or unwhitened dataset.
     """
 
     B = 10
@@ -95,16 +96,23 @@ class FieldDataset(Dataset):
         root: str,
         num_patches: int,
         patch_size: int = 8,
+        whitened: bool = True
     ):
         self.P = patch_size
 
         root = os.path.expanduser(root)
         os.system(f"mkdir -p {root}")
-        if not os.path.exists(f"{root}/field.mat"):
-            os.system("wget https://rctn.org/bruno/sparsenet/IMAGES.mat")
-            os.system(f"mv IMAGES.mat {root}/field.mat")
+        if whitened:
+            filename = "IMAGES.mat"
+            key = "IMAGES"
+        else:
+            filename = "IMAGES_RAW.mat"
+            key = "IMAGESr"
+        path_to_dataset = os.path.join(root, filename)
+        if not os.path.exists(path_to_dataset):
+            os.system(f"wget https://rctn.org/bruno/sparsenet/{filename} -P {root}")
 
-        self.images = torch.tensor(loadmat(f"{root}/field.mat")["IMAGES"])  # [H, W, B]
+        self.images = torch.from_numpy(loadmat(path_to_dataset)[key].astype(float))  # [H, W, B]
         assert self.images.shape == (self.H, self.W, self.B)
 
         self.images = torch.permute(self.images, (2, 0, 1))  # [B, H, W]
