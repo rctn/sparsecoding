@@ -1,7 +1,7 @@
 import torch
 import os
 from scipy.io import loadmat
-from sparsecoding.transforms import patchify
+from sparsecoding.transforms import sample_random_patches
 from torch.utils.data import Dataset
 
 from sparsecoding.priors import Prior
@@ -93,12 +93,10 @@ class FieldDataset(Dataset):
     def __init__(
         self,
         root: str,
+        num_patches: int,
         patch_size: int = 8,
-        stride: int = None,
     ):
         self.P = patch_size
-        if stride is None:
-            stride = patch_size
 
         root = os.path.expanduser(root)
         os.system(f"mkdir -p {root}")
@@ -112,8 +110,7 @@ class FieldDataset(Dataset):
         self.images = torch.permute(self.images, (2, 0, 1))  # [B, H, W]
         self.images = torch.reshape(self.images, (self.B, self.C, self.H, self.W))  # [B, C, H, W]
 
-        self.patches = patchify(patch_size, self.images, stride)  # [B, N, C, P, P]
-        self.patches = torch.reshape(self.patches, (-1, self.C, self.P, self.P))  # [B*N, C, P, P]
+        self.patches = sample_random_patches(patch_size, num_patches, self.images)  # [N, C, P, P]
 
     def __len__(self):
         return self.patches.shape[0]
