@@ -33,7 +33,7 @@ def check_images(images: torch.Tensor, algorithm: str = "zca"):
         )
 
 
-def whiten_images(images: torch.Tensor, algorithm: str, stats: Dict = None, **kwargs) -> torch.Tensor:
+def whiten_images(images: torch.Tensor, algorithm: str, stats: Optional[Dict] = None, **kwargs) -> torch.Tensor:
     """
     Wrapper for all whitening transformations
 
@@ -335,7 +335,7 @@ def sample_random_patches(
 def patchify(
     patch_size: int,
     image: torch.Tensor,
-    stride: int = None,
+    stride: Optional[int] = None,
 ):
     """Break an image into square patches.
 

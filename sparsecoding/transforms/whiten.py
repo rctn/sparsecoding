@@ -1,5 +1,5 @@
 import torch
-from typing import Dict
+from typing import Dict, Optional
 
 
 def compute_whitening_stats(X: torch.Tensor):
@@ -33,8 +33,8 @@ def compute_whitening_stats(X: torch.Tensor):
 def whiten(
     X: torch.Tensor,
     algorithm: str = "zca",
-    stats: Dict = None,
-    n_components: float = None,
+    stats: Optional[Dict]= None,
+    n_components: Optional[float] = None,
     epsilon: float = 0.0,
     return_W: bool = False,
 ) -> torch.Tensor:
