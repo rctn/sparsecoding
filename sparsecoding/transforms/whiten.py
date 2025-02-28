@@ -33,7 +33,7 @@ def compute_whitening_stats(X: torch.Tensor):
 def whiten(
     X: torch.Tensor,
     algorithm: str = "zca",
-    stats: Optional[Dict]= None,
+    stats: Optional[Dict] = None,
     n_components: Optional[float] = None,
     epsilon: float = 0.0,
     return_W: bool = False,
