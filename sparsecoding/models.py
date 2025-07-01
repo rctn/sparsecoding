@@ -83,6 +83,9 @@ class SparseCoding(torch.nn.Module):
         if self.check_for_dictionary_nan:
             self.checknan()
 
+    def infer(self, data):
+        return self.inference_method.infer(data, self.dictionary)
+
     def learn_dictionary(self, dataset, n_epoch, batch_size):
         """Learn dictionary for n_epoch epochs
 
@@ -108,7 +111,7 @@ class SparseCoding(torch.nn.Module):
             loss = 0.0
             for batch in dataloader:
                 # infer coefficients
-                a = self.inference_method.infer(batch, self.dictionary)
+                a = self.infer(batch) 
                 # update dictionary
                 self.update_dictionary(batch, a)
                 # normalize dictionary
@@ -207,3 +210,61 @@ class SparseCoding(torch.nn.Module):
         filehandler = open(filename, "wb")
         pkl.dump(self.get_numpy_dictionary(), filehandler)
         filehandler.close()
+
+
+class TopographicSparseCoding(SparseCoding):
+    def __init__(self, n_basis, n_features, stride, kernel_size,
+                 orthogonality_penalty=0.1, sparsity_penalty=0.2, device=None,
+                 check_for_dictionary_nan=False, n_iterations=1000, step_size=0.01, **kwargs):
+        # Initialize base class
+        super().__init__(
+            inference_method=None,  # not used in subclass
+            n_basis=n_basis,
+            n_features=n_features,
+            sparsity_penalty=sparsity_penalty,
+            device=device,
+            check_for_dictionary_nan=check_for_dictionary_nan,
+            **kwargs
+        )
+        self.stride = stride
+        self.kernel_size = kernel_size
+        self.orthogonality_penalty = torch.tensor(orthogonality_penalty).to(self.device)
+        self.topographic_projection = self.build_topographic_projection().to(self.device)
+        self.n_iterations = n_iterations
+        self.step_size = step_size
+
+    def infer(self, data):
+        """Override base class method with topographic LCA"""
+        return self.topographic_LCA(data)
+
+    def topographic_LCA(self, x):
+        G = self.dictionary.t() @ self.dictionary - torch.eye(self.dictionary.shape[1], device=self.device)
+        b = (self.dictionary.t() @ x.t()).t()
+
+        u = torch.zeros_like(b).to(x.device)
+        for _ in range(self.n_iterations):
+            a = self.compute_active_coefficients(u)
+            du = b - u - a @ G
+            u = u + self.step_size * du
+        return self.compute_active_coefficients(u)
+
+    def compute_active_coefficients(self, u):
+        eps = 0.001
+        group_norm = torch.sqrt(torch.square(u) @ self.topographic_projection.T + eps)  # [B,G]
+        group_norm_reshape = group_norm @ self.topographic_projection  # [B,N]
+        mask = (group_norm_reshape > self.sparsity_penalty).float()
+        a = mask * (group_norm_reshape - self.sparsity_penalty) * (u / group_norm_reshape)
+        return a
+    
+    def _build_topographic_projection(self):
+        """Builds a matrix W of shape [n_groups, n*n] for topographic projection"""
+        n = int(self.n_basis**0.5)
+        r = self.kernel_size
+        indices = []
+        for i in range(0, n - r + 1, self.stride):
+            for j in range(0, n - r + 1, self.stride):
+                mask = torch.zeros(n, n)
+                mask[i:i+r, j:j+r] = 1
+                indices.append(mask.view(-1))
+        W = torch.stack(indices)  
+        return W  # shape [n_groups, n*n]
