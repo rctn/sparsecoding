@@ -111,7 +111,7 @@ class SparseCoding(torch.nn.Module):
             loss = 0.0
             for batch in dataloader:
                 # infer coefficients
-                a = self.infer(batch) 
+                a = self.infer(batch)
                 # update dictionary
                 self.update_dictionary(batch, a)
                 # normalize dictionary
@@ -213,8 +213,37 @@ class SparseCoding(torch.nn.Module):
 
 
 class TopographicSparseCoding(SparseCoding):
-    def __init__(self, n_basis, n_features, stride, kernel_size,
-                 orthogonality_penalty=0.1, sparsity_penalty=0.2, device=None,
+    """Class for learning a topographic sparse codes
+
+    Parameters
+    ----------
+    inference_method : sparsecoding.InferenceMethod
+        Method for inferring coefficients for each image given the
+        dictionary
+    n_basis : int
+        Number of basis functions in dictionary
+    n_features : int
+        Number of features in data
+    sparsity_penalty : float, default=0.2
+        Sparsity penalty
+    stride : int
+        Stride of neighborhoods
+    kernel_size : int
+        Size of neighborhoods
+    dictionary_lr : float, default=1e-2
+        Learning rate of dictionary update
+    device : torch.device, default=torch.device("cpu")
+        Which device to utilize
+    check_for_dictionary_nan : bool, default=False
+        Flag to check for nans in the dictionary after gradient
+        updates and normalizations. Raises ValueError if nan
+        found
+    n_iterations : int, default=1000
+        Number of steps to run forward Euler during inference
+    step_size : float, default=0.01
+        Forward Eular step size
+    """
+    def __init__(self, n_basis, n_features, stride, kernel_size, sparsity_penalty=0.2, device=None,
                  check_for_dictionary_nan=False, n_iterations=1000, step_size=0.01, **kwargs):
         # Initialize base class
         super().__init__(
@@ -228,16 +257,28 @@ class TopographicSparseCoding(SparseCoding):
         )
         self.stride = stride
         self.kernel_size = kernel_size
-        self.orthogonality_penalty = torch.tensor(orthogonality_penalty).to(self.device)
         self.topographic_projection = self.build_topographic_projection().to(self.device)
         self.n_iterations = n_iterations
         self.step_size = step_size
 
     def infer(self, data):
-        """Override base class method with topographic LCA"""
+        """Inference method. Currently uses topographic LCA.
+
+        Parameters
+        ----------
+        data : array-like (batch_size, n_features)
+            data to infer sparse code
+        """
         return self.topographic_LCA(data)
 
     def topographic_LCA(self, x):
+        """Topographic LCA inference method
+
+        Parameters
+        ----------
+        x : array-like (batch_size, n_features)
+            data to infer sparse code
+        """
         G = self.dictionary.t() @ self.dictionary - torch.eye(self.dictionary.shape[1], device=self.device)
         b = (self.dictionary.t() @ x.t()).t()
 
@@ -249,13 +290,20 @@ class TopographicSparseCoding(SparseCoding):
         return self.compute_active_coefficients(u)
 
     def compute_active_coefficients(self, u):
+        """Threshold nonlinearity for topographic LCA
+
+        Parameters
+        ----------
+        u : array-like (batch_size, n_basis)
+            sparse coefficient subthreshold values
+        """
         eps = 0.001
         group_norm = torch.sqrt(torch.square(u) @ self.topographic_projection.T + eps)  # [B,G]
         group_norm_reshape = group_norm @ self.topographic_projection  # [B,N]
         mask = (group_norm_reshape > self.sparsity_penalty).float()
         a = mask * (group_norm_reshape - self.sparsity_penalty) * (u / group_norm_reshape)
         return a
-    
+
     def _build_topographic_projection(self):
         """Builds a matrix W of shape [n_groups, n*n] for topographic projection"""
         n = int(self.n_basis**0.5)
@@ -266,5 +314,5 @@ class TopographicSparseCoding(SparseCoding):
                 mask = torch.zeros(n, n)
                 mask[i:i+r, j:j+r] = 1
                 indices.append(mask.view(-1))
-        W = torch.stack(indices)  
+        W = torch.stack(indices)
         return W  # shape [n_groups, n*n]
