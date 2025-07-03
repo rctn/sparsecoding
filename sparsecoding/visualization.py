@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 # TODO: Combine/refactor plot_dictionary and plot_patches; lots of repeated code.
 # TODO: Add method for visualizing coefficients.
 # TODO: Add method for visualizing reconstructions and original patches.
-def plot_dictionary(dictionary, color=False, nrow=30, normalize=True,
-                    scale_each=True, fig=None, ax=None, title="", size=8):
+def plot_dictionary(dictionary, color=False, nrow=30, normalize=False, plot_on_same_scale=True,
+                    scale_each=False, fig=None, ax=None, title="", size=8):
     """Plot all elements of dictionary in grid
 
     Parameters
@@ -19,9 +19,10 @@ def plot_dictionary(dictionary, color=False, nrow=30, normalize=True,
         Set True if dictionary 3 channel (color)
     nrow : int, default=30
         Number of dictionary elements in a row
-    normalize : bool, default=True
+    normalize : bool, default=False
         Normalize to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
-    scale_each : bool, default=True
+    scale_each : bool, default=False
+    plot_on_same_scale : bool, default=True
         Scale each element to [0,1] (see https://pytorch.org/vision/main/generated/torchvision.utils.make_grid.html)
     fig : matplotlib.pyplot figure handle, optional
         If not provided, new handle created and returned
@@ -49,6 +50,8 @@ def plot_dictionary(dictionary, color=False, nrow=30, normalize=True,
 
     D_imgs = dictionary.T.reshape([n_basis, patch_size, patch_size, nch]).permute([
         0, 3, 1, 2])  # swap channel dims for torch
+    if plot_on_same_scale:
+        D_imgs = 0.5*(D_imgs/D_imgs.abs().max()+1)
     grid_img = torchvision.utils.make_grid(
         D_imgs, nrow=nrow, normalize=normalize, scale_each=scale_each).cpu()
 
