@@ -213,7 +213,7 @@ class SparseCoding(torch.nn.Module):
 
 
 class TopographicSparseCoding(SparseCoding):
-    """Class for learning a topographic sparse codes
+    """Class for learning a topographic sparse codes (torus topology)
 
     Parameters
     ----------
@@ -257,7 +257,7 @@ class TopographicSparseCoding(SparseCoding):
         )
         self.stride = stride
         self.kernel_size = kernel_size
-        self.topographic_projection = self.build_topographic_projection().to(self.device)
+        self.topographic_projection = self._build_topographic_projection().to(self.device)
         self.n_iterations = n_iterations
         self.step_size = step_size
 
@@ -305,14 +305,18 @@ class TopographicSparseCoding(SparseCoding):
         return a
 
     def _build_topographic_projection(self):
-        """Builds a matrix W of shape [n_groups, n*n] for topographic projection"""
+        """Builds a matrix W of shape [n*n, n*n] for topographic projection"""
         n = int(self.n_basis**0.5)
         r = self.kernel_size
+        s = self.stride
         indices = []
-        for i in range(0, n - r + 1, self.stride):
-            for j in range(0, n - r + 1, self.stride):
+        m = r//2
+        for i in range(-m, n-m, s):
+            for j in range(-m, n-m, s):
                 mask = torch.zeros(n, n)
-                mask[i:i+r, j:j+r] = 1
+                mask[:r,:r] = 1
+                mask = mask.roll(i,dims=(0,))
+                mask = mask.roll(j,dims=(1,))
                 indices.append(mask.view(-1))
         W = torch.stack(indices)
         return W  # shape [n_groups, n*n]
