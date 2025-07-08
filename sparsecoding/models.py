@@ -307,6 +307,11 @@ class TopographicSparseCoding(SparseCoding):
     def _build_topographic_projection(self):
         """Builds a matrix W of shape [n*n, n*n] for topographic projection"""
         n = int(self.n_basis**0.5)
+        if n**2 != self.n_basis:
+            raise ValueError(
+                f"n_basis must be a perfect square (e.g., 64, 100, 144), "
+                f"but got n_basis={self.n_basis}. This is required to form a square topographic grid."
+            )
         r = self.kernel_size
         s = self.stride
         indices = []
