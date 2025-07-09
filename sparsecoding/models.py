@@ -242,11 +242,9 @@ class TopographicSparseCoding(SparseCoding):
         Number of steps to run forward Euler during inference
     step_size : float, default=0.01
         Forward Eular step size
-    nonnegative : bool, default=True
-        Coefficients constrained to be nonnegative
     """
     def __init__(self, n_basis, n_features, stride, kernel_size, sparsity_penalty=0.2, device=None,
-                 check_for_dictionary_nan=False, n_iterations=1000, step_size=0.01, nonnegative=True, **kwargs):
+                 check_for_dictionary_nan=False, n_iterations=1000, step_size=0.01, **kwargs):
         # Initialize base class
         super().__init__(
             inference_method=None,  # not used in subclass
@@ -262,7 +260,6 @@ class TopographicSparseCoding(SparseCoding):
         self.topographic_projection = self._build_topographic_projection().to(self.device)
         self.n_iterations = n_iterations
         self.step_size = step_size
-        self.nonnegative = nonnegative
 
     def infer(self, data):
         """Inference method. Currently uses topographic LCA.
@@ -301,8 +298,6 @@ class TopographicSparseCoding(SparseCoding):
             sparse coefficient subthreshold values
         """
         eps = 0.001
-        if self.nonnegative:
-            u = u.clip(min=0.)
         group_norm = torch.sqrt(torch.square(u) @ self.topographic_projection.T + eps)  # [B,G]
         group_norm_reshape = group_norm @ self.topographic_projection  # [B,N]
         mask = (group_norm_reshape > self.sparsity_penalty).float()
